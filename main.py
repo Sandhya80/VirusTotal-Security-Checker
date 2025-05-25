@@ -1,20 +1,25 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, constr, condecimal, conint
 
 app = FastAPI()
 
 # In-memory storage for items
 items = {}
 
-class Item(BaseModel):
-    name: str         # Name of the item
-    description: str  # Description of the item
-    price: float      # Price of the item
-    quantity: int     # Quantity of the item
+class Item(BaseModel):    
+    # Name of the item in 1-50 characters, only letters, spaces, hyphens, and apostrophes allowed
+    name: constr(min_length=1, max_length=50, egex=r"^[a-zA-Z\s\-']+$")
+    # Description of the item in 1-200 characters, cannot be empty
+    description: constr(min_length=1, max_length=200)
+    # Price of the item, must be a positive decimal number(float, > 0)
+    price: condecimal(gt=0)
+    # Quantity of the item, must be zero or a positive integer(int, >= 0)
+    quantity: conint(ge=0)
+
 
 # Creating new item with its data like name(string), description(string), price(number), and quantity(number)   
 @app.post("/items/{item_id}")
-def create_item(item_id: int, item: item):
+def create_item(item_id: int, item: Item):
     # This returns the newly created item with it's ID and details
     # If the item already exists, it raises an HTTPException with a 400 status code.
     if item_id in items:
