@@ -1,5 +1,16 @@
-from fastapi import FastAPI, HTTPException
+# FastAPI for building the API, HTTPException for error handling, and Pydantic for data validation.
+from fastapi import FastAPI, HTTPException, Query
+# Pydantic for data validation and type checking
 from pydantic import BaseModel, constr, condecimal, conint
+
+# httpx for making HTTP requests
+import httpx
+# Importing os for environment variable handling 
+import os
+# Importing re for regular expression operations
+import re
+
+
 
 app = FastAPI()
 
