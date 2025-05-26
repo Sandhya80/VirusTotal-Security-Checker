@@ -20,13 +20,16 @@ class Item(BaseModel):
 # Creating new item with its data like name(string), description(string), price(number), and quantity(number)   
 @app.post("/items/{item_id}")
 def create_item(item_id: int, item: Item):
-    # This returns the newly created item with it's ID and details
+    # This returns the newly created item with validated fields it's ID and details
     # If the item already exists, it raises an HTTPException with a 400 status code.
     if item_id in items:
         raise HTTPException(status_code=400, detail="Item already exists")
+    # Store the item as a dictionary in the in-memory storage with its ID as the key and it's data as value.
     items[item_id] = item.model_dump()
-    # Returns the item with its ID and details.
-    return {"item_id": item_id, **items[item_id]}
+    # Summary message indicating successful creation of the item with its concatenated name and description. 
+    summary = f"Item '{item.name}' with description {item.description} created successfully."
+    # The response that is returned include a summary field with the concatenated name and description of the item.
+    return {"item_id": item_id, **items[item_id], "summary": summary}
 
 
 # Read or retrieve an item by its ID.
@@ -43,12 +46,16 @@ def read_item(item_id: int):
 @app.put("/items/{item_id}")
 def update_item(item_id: int, item: Item):
     
-    # Returns the updated item with its ID and details.
+    # Update an existing item with validated fields.
     # If the item is not found, then it raises an HTTPException with a 404 status code.
     if item_id not in items:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Item not found") 
+    # Update the item with the new data provided in the request body.   
     items[item_id] = item.model_dump()
-    return {"item_id": item_id, **items[item_id]}
+    # A summary message indicating successful update of the item with its concatenated name and description.
+    summary = f"Item '{item.name}' with description {item.description} updated successfully."
+    # The response includes the updated item details and a summary field with the concatenated name and description of the item.
+    return {"item_id": item_id, **items[item_id], "summary": summary}
 
 # Delete an item by its ID."""
 @app.delete("/items/{item_id}")
