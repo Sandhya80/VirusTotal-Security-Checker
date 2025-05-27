@@ -96,17 +96,24 @@ async def research_domain(
     
     # Get VirusTotal API key from environment variable
     VT_API_KEY = os.getenv("VT_API_KEY")
+    # If the API key is not set, raise an HTTPException with a 500 status code
     if not VT_API_KEY:
         raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
     # Prepare the API request to VirusTotal
     url = f"https://www.virustotal.com/vtapi/v2/domain/report"
+    # The API endpoint for domain report in VirusTotal
+    # The API key is passed as a query parameter along with the domain to be researched.
     params = {"apikey": VT_API_KEY, "domain": domain}
     
     # Make the API request to VirusTotal
-    async with httpx.AsyncClient() as client:
+    # Using httpx.AsyncClient to make an asynchronous HTTP GET request to the VirusTotal API
+    async with httpx.AsyncClient() as client:        
+        # The response is awaited to ensure that the request is completed before proceeding.
         response = await client.get(url, params=params)
+        # If the response status code is not 200 (OK), raise an HTTPException with a 502 status code
+        # indicating that there was an error fetching data from VirusTotal.
         if response.status_code != 200:
             raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
+        # Parse the JSON response from VirusTotal
         vt_data = response.json()
-    
     return vt_data
