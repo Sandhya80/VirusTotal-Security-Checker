@@ -1,0 +1,17 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Ignore Python bytecode files
+__pycache__/
+*.py[cod]
+*.$py.class
+
+# Ignore the virtual environment directory
+# Ignore all files in the virtual environment directory
+.venv/
+env/
+venv/
+
+#Ignore environment variable files
+.env
+
+# Ignore VS Code settings
+.vscode/
