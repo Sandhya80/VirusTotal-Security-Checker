@@ -1,7 +1,10 @@
-# httpx for making HTTP requests
-import httpx
+
+# Importing load_dotenv to load environment variables from a .env file
+from dotenv import load_dotenv
 # Importing os for environment variable handling 
 import os
+# httpx for making HTTP requests
+import httpx
 # Importing re for regular expression operations
 import re
 # FastAPI for building the API, HTTPException for error handling, and Pydantic for data validation.
@@ -9,8 +12,10 @@ from fastapi import FastAPI, HTTPException, Query
 # Pydantic for data validation and type checking
 from pydantic import BaseModel, constr, condecimal, conint
 
+# Load environment variables from .env file
+load_dotenv()
 
-
+# FastAPI application for managing items and researching domains using VirusTotal API.
 app = FastAPI()
 
 # In-memory storage for items
@@ -87,6 +92,7 @@ def is_valid_domain(domain: str) -> bool:
     # The pattern also ensures that the domain does not start or end with a hyphen.
     return re.match(pattern, domain) is not None
 
+# Endpoint to research a domain using the VirusTotal API
 @app.get("/research_domain")
 async def research_domain(
     domain: str = Query(..., description="Domain name to research")
