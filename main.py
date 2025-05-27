@@ -1,14 +1,13 @@
-# FastAPI for building the API, HTTPException for error handling, and Pydantic for data validation.
-from fastapi import FastAPI, HTTPException, Query
-# Pydantic for data validation and type checking
-from pydantic import BaseModel, constr, condecimal, conint
-
 # httpx for making HTTP requests
 import httpx
 # Importing os for environment variable handling 
 import os
 # Importing re for regular expression operations
 import re
+# FastAPI for building the API, HTTPException for error handling, and Pydantic for data validation.
+from fastapi import FastAPI, HTTPException, Query
+# Pydantic for data validation and type checking
+from pydantic import BaseModel, constr, condecimal, conint
 
 
 
@@ -78,3 +77,36 @@ def delete_item(item_id: int):
         raise HTTPException(status_code=404, detail="Item not found")
     del items[item_id]
     return {"detail": "Item deleted"}
+
+
+def is_valid_domain(domain: str) -> bool:
+    # Validates if the input string is a valid domain name by matching it with regular expression pattern
+    # Starts with a letter or number, followed by letters, numbers, or hyphens
+    pattern = r"^(?!\-)(?:[a-zA-Z0-9\-]{1,63}\.)+[a-zA-Z]{2,}$"
+    # The pattern allows for multiple subdomains and ensures that the domain ends with a valid top-level domain of at least two characters.
+    # The pattern also ensures that the domain does not start or end with a hyphen.
+    return re.match(pattern, domain) is not None
+
+@app.get("/research_domain")
+async def research_domain(
+    domain: str = Query(..., description="Domain name to research")
+):    # Validates the domain name using the is_valid_domain function
+    if not is_valid_domain(domain):
+        raise HTTPException(status_code=400, detail="Invalid domain name format")
+    
+    # Get VirusTotal API key from environment variable
+    VT_API_KEY = os.getenv("VT_API_KEY")
+    if not VT_API_KEY:
+        raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
+    # Prepare the API request to VirusTotal
+    url = f"https://www.virustotal.com/vtapi/v2/domain/report"
+    params = {"apikey": VT_API_KEY, "domain": domain}
+    
+    # Make the API request to VirusTotal
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, params=params)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
+        vt_data = response.json()
+    
+    return vt_data
