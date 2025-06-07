@@ -1,4 +1,3 @@
-
 # Importing load_dotenv to load environment variables from a .env file
 from dotenv import load_dotenv
 # Importing os for environment variable handling 
@@ -23,7 +22,7 @@ items = {}
 
 class Item(BaseModel):    
     # Name of the item in 1-50 characters, only letters, spaces, hyphens, and apostrophes allowed
-    name: constr(min_length=1, max_length=50, regex=r"^[a-zA-Z\s\-']+$")
+    name: constr(min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
     # Description of the item in 1-200 characters, cannot be empty
     description: constr(min_length=1, max_length=200)
     # Price of the item, must be a positive decimal number(float, > 0)
