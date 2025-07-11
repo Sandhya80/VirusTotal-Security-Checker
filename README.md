@@ -71,7 +71,7 @@ A modern, full-stack web application for checking the security status of domains
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/yourusername/hello_world_fastapi.git
+    git clone https://github.com/Sandhya80/hello_world_fastapi.git
     cd hello_world_fastapi
     ```
 
@@ -105,7 +105,7 @@ A modern, full-stack web application for checking the security status of domains
 2. **Open your browser and visit:**
     - [http://localhost:8000/](http://localhost:8000/) for the local web interface
     - [http://localhost:8000/docs](http://localhost:8000/docs) for local API docs (Swagger UI)
-    - [https://virustotal-security-checker.herokuapp.com/](https://virustotal-security-checker.herokuapp.com/) for the deployed web app on Heroku
+    - [https://virustotal-security-checker-1ba82364afaa.herokuapp.com/](https://virustotal-security-checker-1ba82364afaa.herokuapp.com/) for the deployed web app on Heroku
 
 ---
 
@@ -138,7 +138,9 @@ A modern, full-stack web application for checking the security status of domains
 ## Screenshots
 
 
-> _Add screenshots or a demo GIF here to showcase the UI and features._
+![Home Page](screenshots/homepage.png)
+![Domain Check Result](screenshots/domain_result.png)
+![IP Check Result](screenshots/ip_result.png)
 
 ---
 
