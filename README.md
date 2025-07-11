@@ -101,10 +101,11 @@ A modern, full-stack web application for checking the security status of domains
     uvicorn main:app --reload
     ```
 
-2. **Open your browser and visit:**
 
-    - [http://localhost:8000/](http://localhost:8000/) for the web interface
-    - [http://localhost:8000/docs](http://localhost:8000/docs) for API docs (Swagger UI)
+2. **Open your browser and visit:**
+    - [http://localhost:8000/](http://localhost:8000/) for the local web interface
+    - [http://localhost:8000/docs](http://localhost:8000/docs) for local API docs (Swagger UI)
+    - [https://virustotal-security-checker.herokuapp.com/](https://virustotal-security-checker.herokuapp.com/) for the deployed web app on Heroku
 
 ---
 
