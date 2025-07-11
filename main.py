@@ -36,9 +36,11 @@ class IPInput(BaseModel):
     value: str
     @validator('value')
     def valid_ip(cls, v):
-        pattern = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
-        if not re.match(pattern, v):
-            raise ValueError("Invalid IP address format")
+        # Accepts plain IPv4 or IPv4 with CIDR
+        ip_pattern = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+        cidr_pattern = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
+        if not (re.match(ip_pattern, v) or re.match(cidr_pattern, v)):
+            raise ValueError("Invalid IP address format. Accepts IPv4 or IPv4/CIDR.")
         return v
 
 class HashInput(BaseModel):
