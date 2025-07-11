@@ -7,28 +7,61 @@ import httpx
 # Importing re for regular expression operations
 import re
 # FastAPI for building the API, HTTPException for error handling, and Pydantic for data validation.
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 # Pydantic for data validation and type checking
 from pydantic import BaseModel, constr, condecimal, conint
 
 # Load environment variables from .env file
 load_dotenv()
 
+
 # FastAPI application for managing items and researching domains using VirusTotal API.
 app = FastAPI()
+
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# Home page route
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+from pydantic import validator
+
+# Pydantic models for input validation
+class IPInput(BaseModel):
+    value: str
+    @validator('value')
+    def valid_ip(cls, v):
+        pattern = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+        if not re.match(pattern, v):
+            raise ValueError("Invalid IP address format")
+        return v
+
+class HashInput(BaseModel):
+    value: str
+    @validator('value')
+    def valid_hash(cls, v):
+        # Accepts MD5, SHA1, SHA256
+        if not re.match(r"^[a-fA-F0-9]{32}$", v) and not re.match(r"^[a-fA-F0-9]{40}$", v) and not re.match(r"^[a-fA-F0-9]{64}$", v):
+            raise ValueError("Invalid hash format")
+        return v
 
 # In-memory storage for items
 items = {}
 
-class Item(BaseModel):    
+class Item(BaseModel):
     # Name of the item in 1-50 characters, only letters, spaces, hyphens, and apostrophes allowed
-    name: constr(min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
+    name: constr = constr(min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
     # Description of the item in 1-200 characters, cannot be empty
-    description: constr(min_length=1, max_length=200)
+    description: constr = constr(min_length=1, max_length=200)
     # Price of the item, must be a positive decimal number(float, > 0)
-    price: condecimal(gt=0)
+    price: condecimal = condecimal(gt=0)
     # Quantity of the item, must be zero or a positive integer(int, >= 0)
-    quantity: conint(ge=0)
+    quantity: conint = conint(ge=0)
 
 
 # Creating new item with its data like name(string), description(string), price(number), and quantity(number)   
@@ -91,34 +124,100 @@ def is_valid_domain(domain: str) -> bool:
     # The pattern also ensures that the domain does not start or end with a hyphen.
     return re.match(pattern, domain) is not None
 
-# Endpoint to research a domain using the VirusTotal API
+# Endpoint to research a domain using VirusTotal API v3
 @app.get("/research_domain")
-async def research_domain(
-    domain: str = Query(..., description="Domain name to research")
-):    # Validates the domain name using the is_valid_domain function
-    if not is_valid_domain(domain):
+async def research_domain(value: str = Query(..., description="Domain name to research")):
+    if not is_valid_domain(value):
         raise HTTPException(status_code=400, detail="Invalid domain name format")
-    
-    # Get VirusTotal API key from environment variable
     VT_API_KEY = os.getenv("VT_API_KEY")
-    # If the API key is not set, raise an HTTPException with a 500 status code
     if not VT_API_KEY:
         raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
-    # Prepare the API request to VirusTotal
-    url = f"https://www.virustotal.com/vtapi/v2/domain/report"
-    # The API endpoint for domain report in VirusTotal
-    # The API key is passed as a query parameter along with the domain to be researched.
-    params = {"apikey": VT_API_KEY, "domain": domain}
-    
-    # Make the API request to VirusTotal
-    # Using httpx.AsyncClient to make an asynchronous HTTP GET request to the VirusTotal API
-    async with httpx.AsyncClient() as client:        
-        # The response is awaited to ensure that the request is completed before proceeding.
-        response = await client.get(url, params=params)
-        # If the response status code is not 200 (OK), raise an HTTPException with a 502 status code
-        # indicating that there was an error fetching data from VirusTotal.
+    url = f"https://www.virustotal.com/api/v3/domains/{value}"
+    headers = {"x-apikey": VT_API_KEY}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
         if response.status_code != 200:
             raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
-        # Parse the JSON response from VirusTotal
         vt_data = response.json()
-    return vt_data
+    return parse_vt_v3_response(vt_data, "domain")
+
+# Endpoint to research an IP address using VirusTotal API v3
+@app.get("/research_ip")
+async def research_ip(value: str = Query(..., description="IP address to research")):
+    try:
+        IPInput(value=value)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    VT_API_KEY = os.getenv("VT_API_KEY")
+    if not VT_API_KEY:
+        raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
+    url = f"https://www.virustotal.com/api/v3/ip_addresses/{value}"
+    headers = {"x-apikey": VT_API_KEY}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
+        vt_data = response.json()
+    return parse_vt_v3_response(vt_data, "ip")
+
+# Endpoint to research a file hash using VirusTotal API v3
+@app.get("/research_hash")
+async def research_hash(value: str = Query(..., description="File hash to research")):
+    try:
+        HashInput(value=value)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    VT_API_KEY = os.getenv("VT_API_KEY")
+    if not VT_API_KEY:
+        raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
+    url = f"https://www.virustotal.com/api/v3/files/{value}"
+    headers = {"x-apikey": VT_API_KEY}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
+        vt_data = response.json()
+    return parse_vt_v3_response(vt_data, "hash")
+
+# Helper to parse VirusTotal v3 response for UI
+def parse_vt_v3_response(vt_data, typ):
+    try:
+        data = vt_data.get("data", {})
+        attributes = data.get("attributes", {})
+        id_ = data.get("id", "")
+        status = attributes.get("last_analysis_stats", {})
+        reputation = attributes.get("reputation", None)
+        vendors = attributes.get("last_analysis_results", {})
+        vendor_results = {k: {"result": v.get("result", "clean"), "category": v.get("category", "")} for k, v in vendors.items()}
+        # Determine overall status
+        malicious = status.get("malicious", 0)
+        suspicious = status.get("suspicious", 0)
+        harmless = status.get("harmless", 0)
+        undetected = status.get("undetected", 0)
+        total = sum(status.values())
+        last_analysis_date = attributes.get("last_analysis_date", None)
+        vt_permalink = f"https://www.virustotal.com/gui/{typ}/{id_}" if id_ else None
+        # API quota info (if present)
+        api_info = vt_data.get("meta", {}).get("api_info", {})
+        if malicious:
+            overall = "Malicious"
+        elif suspicious:
+            overall = "Suspicious"
+        elif harmless and not (malicious or suspicious):
+            overall = "Harmless"
+        else:
+            overall = "Unknown"
+        return {
+            "type": typ,
+            "id": id_,
+            "status": overall,
+            "reputation": reputation,
+            "vendors": vendor_results,
+            "stats": status,
+            "total_vendors": total,
+            "last_analysis_date": last_analysis_date,
+            "vt_permalink": vt_permalink,
+            "api_info": api_info
+        }
+    except Exception:
+        return {"error": "Could not parse VirusTotal response."}
