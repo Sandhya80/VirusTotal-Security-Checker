@@ -53,17 +53,17 @@ class HashInput(BaseModel):
 # In-memory storage for items
 items = {}
 
+
 class Item(BaseModel):
     # Name of the item in 1-50 characters, only letters, spaces, hyphens, and apostrophes allowed
-    name: constr = Field(..., min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
+    name: str = Field(..., min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
     # Description of the item in 1-200 characters, cannot be empty
-    description: constr = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=1, max_length=200)
     # Price of the item, must be a positive decimal number(float, > 0)
-    price: condecimal = Field(..., gt=0)
+    price: float = Field(..., gt=0)
     # Quantity of the item, must be zero or a positive integer(int, >= 0)
-    quantity: conint = Field(..., ge=0)
+    quantity: int = Field(..., ge=0)
 
-    # Pydantic model config
     class Config:
         schema_extra = {
             "example": {
