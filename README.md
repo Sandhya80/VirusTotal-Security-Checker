@@ -24,7 +24,8 @@ A modern, full-stack web application for checking the security status of domains
 ### How to Use the VirusTotal Security Checker
 
 1. **Select Type:** Choose whether you want to check a Domain, IP Address, or File Hash from the dropdown menu.
-2. **Enter Value:** Input the domain name (e.g., example.com), IP address (e.g., 8.8.8.8), or file hash (MD5, SHA1, or SHA256).
+2. **Enter Value:** Input the domain name (e.g., example.com), IP address, or file hash (MD5, SHA1, or SHA256).
+   - For IP research, you can enter either a plain IPv4 address (e.g., "192.0.2.1") or an IPv4 address with CIDR notation (e.g., "192.0.2.0/24") according to your preference.
 3. **Check Security:** Click the "Check Security" button to analyze the input using VirusTotal.
 
 4. **View Results:**
