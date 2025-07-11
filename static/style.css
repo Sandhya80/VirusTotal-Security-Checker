@@ -1,0 +1,100 @@
+.badge.bg-danger {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
+    color: #fff !important;
+}
+.badge.bg-warning {
+    background: linear-gradient(90deg, #fbbf24 0%, #fde68a 100%) !important;
+    color: #b45309 !important;
+}
+.badge.bg-success {
+    background: linear-gradient(90deg, #34d399 0%, #6ee7b7 100%) !important;
+    color: #065f46 !important;
+}
+.badge.bg-secondary {
+    background: linear-gradient(90deg, #a1a1aa 0%, #e5e7eb 100%) !important;
+    color: #374151 !important;
+}
+.btn-outline-primary {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+.btn-outline-primary:hover {
+    background: #6366f1;
+    color: #fff;
+}
+.progress {
+    background: #ede9fe;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.progress-bar {
+    font-size: 0.95rem;
+}
+.btn-outline-secondary.btn-sm {
+    border-color: #a1a1aa;
+    color: #6b7280;
+}
+.btn-outline-secondary.btn-sm:hover {
+    background: #a1a1aa;
+    color: #fff;
+}
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+    min-height: 100vh;
+}
+.container {
+    background: rgba(255,255,255,0.95);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    padding: 2.5rem 2rem;
+    margin-top: 3rem;
+}
+h1 {
+    color: #5b21b6;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #6366f1 0%, #a21caf 100%);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+.btn-primary:hover {
+    background: linear-gradient(90deg, #a21caf 0%, #6366f1 100%);
+}
+.form-label {
+    color: #7c3aed;
+    font-weight: 500;
+}
+.form-select, .form-control {
+    border-radius: 8px;
+    border: 1px solid #c7d2fe;
+}
+.card {
+    border-radius: 14px;
+    box-shadow: 0 4px 16px 0 rgba(92, 0, 128, 0.08);
+    border: none;
+    background: linear-gradient(120deg, #f3e8ff 0%, #e0e7ff 100%);
+}
+.card-title {
+    color: #a21caf;
+    font-weight: 600;
+}
+ul {
+    padding-left: 1.2rem;
+}
+li {
+    color: #4b5563;
+    margin-bottom: 0.2rem;
+}
+.alert-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: none;
+}
+.text-center {
+    color: #6366f1;
+    font-weight: 500;
+}
+#result { margin-top: 2rem; }
