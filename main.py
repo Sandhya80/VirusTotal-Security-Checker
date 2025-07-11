@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 # Pydantic for data validation and type checking
-from pydantic import BaseModel, constr, condecimal, conint
+from pydantic import BaseModel, constr, condecimal, conint, Field
 
 # Load environment variables from .env file
 load_dotenv()
@@ -55,13 +55,24 @@ items = {}
 
 class Item(BaseModel):
     # Name of the item in 1-50 characters, only letters, spaces, hyphens, and apostrophes allowed
-    name: constr = constr(min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
+    name: constr = Field(..., min_length=1, max_length=50, pattern=r"^[a-zA-Z\s\-']+$")
     # Description of the item in 1-200 characters, cannot be empty
-    description: constr = constr(min_length=1, max_length=200)
+    description: constr = Field(..., min_length=1, max_length=200)
     # Price of the item, must be a positive decimal number(float, > 0)
-    price: condecimal = condecimal(gt=0)
+    price: condecimal = Field(..., gt=0)
     # Quantity of the item, must be zero or a positive integer(int, >= 0)
-    quantity: conint = conint(ge=0)
+    quantity: conint = Field(..., ge=0)
+
+    # Pydantic model config
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "Example Item",
+                "description": "A sample item for demonstration.",
+                "price": 9.99,
+                "quantity": 5
+            }
+        }
 
 
 # Creating new item with its data like name(string), description(string), price(number), and quantity(number)   
