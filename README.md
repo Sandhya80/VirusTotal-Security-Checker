@@ -138,9 +138,9 @@ A modern, full-stack web application for checking the security status of domains
 ## Screenshots
 
 
-![Home Page](screenshots/homepage.png)
-![Domain Check Result](screenshots/domain_result.png)
-![IP Check Result](screenshots/ip_result.png)
+![Home Page](static\screenshots\homepage.png)
+![Domain Check Result](static\screenshots\domain_result.png)
+![IP Check Result](static\screenshots\ip_result.png)
 
 ---
 
