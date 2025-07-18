@@ -1,7 +1,30 @@
-# Endpoint to search Vectara corpus
-from fastapi import Body
-from fastapi.responses import JSONResponse
 
+# --- Imports ---
+import os
+import re
+from dotenv import load_dotenv
+import httpx
+from fastapi import FastAPI, HTTPException, Query, Request, Body
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, constr, condecimal, conint, Field
+
+# --- Load environment variables ---
+load_dotenv()
+
+# --- Environment variables ---
+VECTARA_API_KEY = os.getenv("VECTARA_API_KEY")
+VECTARA_CUSTOMER_ID = os.getenv("VECTARA_CUSTOMER_ID")
+VECTARA_CORPUS_ID = os.getenv("VECTARA_CORPUS_ID")
+VECTARA_MCP_URL = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+VT_API_KEY = os.getenv("VT_API_KEY")
+
+# --- FastAPI app ---
+app = FastAPI()
+
+# --- Vectara Search Endpoint ---
 class VectaraSearchRequest(BaseModel):
     query: str
     top_k: int = 5
@@ -36,21 +59,6 @@ async def search_vectara(request: VectaraSearchRequest):
         if response.status_code != 200:
             raise HTTPException(status_code=502, detail=f"Vectara search error: {response.text}")
         return JSONResponse(content=response.json())
-# Importing load_dotenv to load environment variables from a .env file
-from dotenv import load_dotenv
-# Importing os for environment variable handling 
-import os
-# httpx for making HTTP requests
-import httpx
-# Importing re for regular expression operations
-import re
-# FastAPI for building the API, HTTPException for error handling, and Pydantic for data validation.
-from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-# Pydantic for data validation and type checking
-from pydantic import BaseModel, constr, condecimal, conint, Field
 
 # Load environment variables from .env file
 load_dotenv()
