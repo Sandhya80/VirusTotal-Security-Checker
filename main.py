@@ -299,11 +299,56 @@ async def download_report_text(value: str = Query(..., description="Domain, IP, 
     return PlainTextResponse(text_report, headers={"Content-Disposition": f"attachment; filename={filename}"})
     
 
-# Claude (Anthropic) integration
+# Vectara integration
 import anthropic
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+VECTARA_API_KEY = os.getenv("VECTARA_API_KEY")
+VECTARA_CUSTOMER_ID = os.getenv("VECTARA_CUSTOMER_ID")
+VECTARA_CORPUS_ID = os.getenv("VECTARA_CORPUS_ID")
+VECTARA_MCP_URL = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
+
+from fastapi import Body
+
+class VectaraUploadRequest(BaseModel):
+    doc_id: str
+    text: str
+    metadata: dict = {}
+
+# Endpoint to upload a text report to Vectara corpus
+@app.post("/vectara/upload_report")
+async def upload_report_to_vectara(request: VectaraUploadRequest):
+    """
+    Upload a text report to Vectara corpus for RAG/search.
+    """
+    if not (VECTARA_API_KEY and VECTARA_CUSTOMER_ID and VECTARA_CORPUS_ID):
+        raise HTTPException(status_code=500, detail="Vectara API credentials not configured")
+    vectara_url = VECTARA_MCP_URL
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {VECTARA_API_KEY}",
+        "customer-id": VECTARA_CUSTOMER_ID
+    }
+    payload = {
+        "corpusId": VECTARA_CORPUS_ID,
+        "document": {
+            "documentId": request.doc_id,
+            "title": request.metadata.get("title", request.doc_id),
+            "metadataJson": request.metadata,
+            "section": [
+                {
+                    "text": request.text
+                }
+            ]
+        }
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.post(vectara_url, headers=headers, json=payload)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"Vectara API error: {response.text}")
+        return {"detail": "Uploaded to Vectara", "vectara_response": response.json()}
 
 def ask_claude(prompt: str, max_tokens: int = 300) -> str:
     if not ANTHROPIC_API_KEY:
