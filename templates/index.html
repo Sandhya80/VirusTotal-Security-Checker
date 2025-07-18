@@ -26,6 +26,29 @@
             <button type="submit" class="btn btn-primary w-100">Check Security</button>
         </form>
         <div id="result"></div>
+
+        <!-- Download VirusTotal Report as Text section -->
+        <div class="card mt-5" style="max-width: 600px; margin: 0 auto;">
+            <div class="card-body">
+                <h5 class="card-title">Download VirusTotal Report as Text</h5>
+                <div class="row g-2 align-items-center mb-2">
+                    <div class="col-md-6">
+                        <input type="text" id="vt-value" class="form-control" placeholder="Domain, IP, or Hash">
+                    </div>
+                    <div class="col-md-3">
+                        <select id="vt-type" class="form-select">
+                            <option value="domain">Domain</option>
+                            <option value="ip">IP</option>
+                            <option value="hash">Hash</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" onclick="downloadVTTextReport()">Download as Text</button>
+                    </div>
+                </div>
+                <small class="text-muted">Enter a domain, IP, or hash and select the type to download a plain text summary of the VirusTotal report.</small>
+            </div>
+        </div>
     </div>
     <script src="/static/app.js"></script>
 </body>

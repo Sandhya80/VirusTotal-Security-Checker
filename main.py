@@ -192,6 +192,8 @@ async def research_hash(value: str = Query(..., description="File hash to resear
         vt_data = response.json()
     return parse_vt_v3_response(vt_data, "hash")
 
+from fastapi.responses import PlainTextResponse
+
 # Helper to parse VirusTotal v3 response for UI
 def parse_vt_v3_response(vt_data, typ):
     try:
@@ -234,3 +236,81 @@ def parse_vt_v3_response(vt_data, typ):
         }
     except Exception:
         return {"error": "Could not parse VirusTotal response."}
+
+# Helper to create a text summary from VirusTotal v3 response
+def vt_report_to_text(vt_data, typ):
+    parsed = parse_vt_v3_response(vt_data, typ)
+    if "error" in parsed:
+        return "Could not parse VirusTotal response."
+    lines = []
+    lines.append(f"VirusTotal {typ.title()} Report")
+    lines.append(f"ID: {parsed['id']}")
+    lines.append(f"Status: {parsed['status']}")
+    if parsed.get('reputation') is not None:
+        lines.append(f"Reputation: {parsed['reputation']}")
+    lines.append(f"Total Vendors: {parsed['total_vendors']}")
+    lines.append(f"Last Analysis Date: {parsed['last_analysis_date']}")
+    lines.append(f"Permalink: {parsed['vt_permalink']}")
+    lines.append("")
+    lines.append("Vendor Results:")
+    for vendor, result in parsed['vendors'].items():
+        lines.append(f"- {vendor}: {result['result']} ({result['category']})")
+    lines.append("")
+    lines.append(f"Stats: {parsed['stats']}")
+    if parsed.get('api_info'):
+        lines.append(f"API Info: {parsed['api_info']}")
+    return "\n".join(lines)
+
+# Endpoint to download VirusTotal report as text
+@app.get("/download_report_text")
+async def download_report_text(value: str = Query(..., description="Domain, IP, or hash to research"), typ: str = Query(..., description="Type: domain, ip, or hash")):
+    """
+    Download a VirusTotal report as a plain text file. typ must be one of: domain, ip, hash.
+    """
+    VT_API_KEY = os.getenv("VT_API_KEY")
+    if not VT_API_KEY:
+        raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
+    if typ == "domain":
+        if not is_valid_domain(value):
+            raise HTTPException(status_code=400, detail="Invalid domain name format")
+        url = f"https://www.virustotal.com/api/v3/domains/{value}"
+    elif typ == "ip":
+        try:
+            IPInput(value=value)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        url = f"https://www.virustotal.com/api/v3/ip_addresses/{value}"
+    elif typ == "hash":
+        try:
+            HashInput(value=value)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        url = f"https://www.virustotal.com/api/v3/files/{value}"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid type. Must be one of: domain, ip, hash.")
+    headers = {"x-apikey": VT_API_KEY}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
+        vt_data = response.json()
+    text_report = vt_report_to_text(vt_data, typ)
+    filename = f"{typ}_report_{value}.txt"
+    return PlainTextResponse(text_report, headers={"Content-Disposition": f"attachment; filename={filename}"})
+    
+
+# Claude (Anthropic) integration
+import anthropic
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+def ask_claude(prompt: str, max_tokens: int = 300) -> str:
+    if not ANTHROPIC_API_KEY:
+        return "Claude API key not configured."
+    response = claude_client.completions.create(
+        model="claude-3-opus-20240229",
+        max_tokens_to_sample=max_tokens,
+        prompt=f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}"
+    )
+    return response.completion.strip()

@@ -1,3 +1,14 @@
+// Download VirusTotal report as text
+function downloadVTTextReport() {
+    const value = document.getElementById('vt-value').value.trim();
+    const typ = document.getElementById('vt-type').value;
+    if (!value) {
+        alert('Please enter a value (domain, IP, or hash).');
+        return;
+    }
+    const url = `/download_report_text?value=${encodeURIComponent(value)}&typ=${encodeURIComponent(typ)}`;
+    window.open(url, '_blank');
+}
 document.getElementById('checkForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const type = document.getElementById('inputType').value;
