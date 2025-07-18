@@ -1,3 +1,43 @@
+// Vectara Search UI logic
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('vectaraSearchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = document.getElementById('vectara-query').value.trim();
+            const resultsDiv = document.getElementById('vectara-search-results');
+            if (!query) return;
+            resultsDiv.innerHTML = '<div class="text-center">Searching...</div>';
+            try {
+                const res = await fetch('/vectara/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.query || !data.query[0] || !data.query[0].result) {
+                    throw new Error(data.detail || 'No results found.');
+                }
+                const results = data.query[0].result;
+                if (!results.length) {
+                    resultsDiv.innerHTML = '<div class="alert alert-warning">No relevant reports found.</div>';
+                    return;
+                }
+                let html = '<ul class="list-group">';
+                for (const r of results) {
+                    html += `<li class="list-group-item">
+                        <strong>Score:</strong> ${r.score.toFixed(3)}<br>
+                        <strong>Snippet:</strong> <span>${r.text}</span>
+                    </li>`;
+                }
+                html += '</ul>';
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+            }
+        });
+    }
+});
 // Download VirusTotal report as text
 function downloadVTTextReport() {
     const value = document.getElementById('vt-value').value.trim();

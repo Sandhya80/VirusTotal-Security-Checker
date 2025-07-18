@@ -1,3 +1,41 @@
+# Endpoint to search Vectara corpus
+from fastapi import Body
+from fastapi.responses import JSONResponse
+
+class VectaraSearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
+
+@app.post("/vectara/search")
+async def search_vectara(request: VectaraSearchRequest):
+    """
+    Search the Vectara corpus for relevant documents.
+    """
+    if not (VECTARA_API_KEY and VECTARA_CUSTOMER_ID and VECTARA_CORPUS_ID):
+        raise HTTPException(status_code=500, detail="Vectara API credentials not configured")
+    vectara_url = "https://api.vectara.io/v1/query"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {VECTARA_API_KEY}",
+        "customer-id": VECTARA_CUSTOMER_ID
+    }
+    payload = {
+        "query": [
+            {
+                "query": request.query,
+                "corpusKey": [{
+                    "customerId": VECTARA_CUSTOMER_ID,
+                    "corpusId": VECTARA_CORPUS_ID
+                }],
+                "numResults": request.top_k
+            }
+        ]
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.post(vectara_url, headers=headers, json=payload)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"Vectara search error: {response.text}")
+        return JSONResponse(content=response.json())
 # Importing load_dotenv to load environment variables from a .env file
 from dotenv import load_dotenv
 # Importing os for environment variable handling 
@@ -152,7 +190,34 @@ async def research_domain(value: str = Query(..., description="Domain name to re
         if response.status_code != 200:
             raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
         vt_data = response.json()
-    return parse_vt_v3_response(vt_data, "domain")
+    parsed = parse_vt_v3_response(vt_data, "domain")
+    # Automated Vectara upload (fire and forget)
+    try:
+        vectara_url = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
+        vectara_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('VECTARA_API_KEY')}",
+            "customer-id": os.getenv('VECTARA_CUSTOMER_ID')
+        }
+        vectara_payload = {
+            "corpusId": os.getenv('VECTARA_CORPUS_ID'),
+            "document": {
+                "documentId": parsed.get("id", value),
+                "title": f"VirusTotal Domain Report: {value}",
+                "metadataJson": {"type": "domain", "id": parsed.get("id", value)},
+                "section": [
+                    {"text": vt_report_to_text(vt_data, "domain")}
+                ]
+            }
+        }
+        import asyncio
+        async def upload_vectara():
+            async with httpx.AsyncClient() as client:
+                await client.post(vectara_url, headers=vectara_headers, json=vectara_payload)
+        asyncio.create_task(upload_vectara())
+    except Exception:
+        pass
+    return parsed
 
 # Endpoint to research an IP address using VirusTotal API v3
 @app.get("/research_ip")
@@ -171,7 +236,34 @@ async def research_ip(value: str = Query(..., description="IP address to researc
         if response.status_code != 200:
             raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
         vt_data = response.json()
-    return parse_vt_v3_response(vt_data, "ip")
+    parsed = parse_vt_v3_response(vt_data, "ip")
+    # Automated Vectara upload (fire and forget)
+    try:
+        vectara_url = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
+        vectara_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('VECTARA_API_KEY')}",
+            "customer-id": os.getenv('VECTARA_CUSTOMER_ID')
+        }
+        vectara_payload = {
+            "corpusId": os.getenv('VECTARA_CORPUS_ID'),
+            "document": {
+                "documentId": parsed.get("id", value),
+                "title": f"VirusTotal IP Report: {value}",
+                "metadataJson": {"type": "ip", "id": parsed.get("id", value)},
+                "section": [
+                    {"text": vt_report_to_text(vt_data, "ip")}
+                ]
+            }
+        }
+        import asyncio
+        async def upload_vectara():
+            async with httpx.AsyncClient() as client:
+                await client.post(vectara_url, headers=vectara_headers, json=vectara_payload)
+        asyncio.create_task(upload_vectara())
+    except Exception:
+        pass
+    return parsed
 
 # Endpoint to research a file hash using VirusTotal API v3
 @app.get("/research_hash")
@@ -190,7 +282,34 @@ async def research_hash(value: str = Query(..., description="File hash to resear
         if response.status_code != 200:
             raise HTTPException(status_code=502, detail="Error fetching data from VirusTotal")
         vt_data = response.json()
-    return parse_vt_v3_response(vt_data, "hash")
+    parsed = parse_vt_v3_response(vt_data, "hash")
+    # Automated Vectara upload (fire and forget)
+    try:
+        vectara_url = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
+        vectara_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('VECTARA_API_KEY')}",
+            "customer-id": os.getenv('VECTARA_CUSTOMER_ID')
+        }
+        vectara_payload = {
+            "corpusId": os.getenv('VECTARA_CORPUS_ID'),
+            "document": {
+                "documentId": parsed.get("id", value),
+                "title": f"VirusTotal Hash Report: {value}",
+                "metadataJson": {"type": "hash", "id": parsed.get("id", value)},
+                "section": [
+                    {"text": vt_report_to_text(vt_data, "hash")}
+                ]
+            }
+        }
+        import asyncio
+        async def upload_vectara():
+            async with httpx.AsyncClient() as client:
+                await client.post(vectara_url, headers=vectara_headers, json=vectara_payload)
+        asyncio.create_task(upload_vectara())
+    except Exception:
+        pass
+    return parsed
 
 from fastapi.responses import PlainTextResponse
 

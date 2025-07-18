@@ -50,6 +50,19 @@
             </div>
         </div>
     </div>
+    <!-- Vectara Search UI -->
+    <div class="card mt-5" style="max-width: 600px; margin: 0 auto;">
+        <div class="card-body">
+            <h5 class="card-title">Search Reports (Vectara RAG)</h5>
+            <form id="vectaraSearchForm" class="mb-2">
+                <div class="input-group">
+                    <input type="text" id="vectara-query" class="form-control" placeholder="Ask a question or search reports..." required>
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
+            <div id="vectara-search-results"></div>
+        </div>
+    </div>
     <script src="/static/app.js?v=20250718"></script>
 </body>
 </html>
