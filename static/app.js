@@ -50,74 +50,80 @@ function downloadVTTextReport() {
     window.open(url, '_blank');
 }
 
-document.getElementById('checkForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const type = document.getElementById('inputType').value;
-    const value = document.getElementById('inputValue').value.trim();
-    if (!value) return;
 
-    // Hide and clear previous enriched results
-    const card = document.getElementById('enriched-results-card');
-    card.classList.add('d-none');
-    document.getElementById('claude-summary').innerHTML = '';
-    document.getElementById('virustotal-section').innerHTML = '';
-    document.getElementById('vectara-section').innerHTML = '';
-    // Hide old result
-    document.getElementById('result').innerHTML = '';
+document.addEventListener('DOMContentLoaded', function() {
+    const checkForm = document.getElementById('checkForm');
+    if (checkForm) {
+        checkForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const type = document.getElementById('inputType').value;
+            const value = document.getElementById('inputValue').value.trim();
+            if (!value) return;
 
-    // Show loading state
-    document.getElementById('claude-summary').innerHTML = '<span class="text-muted">Loading summary...</span>';
-    document.getElementById('virustotal-section').innerHTML = '<span class="text-muted">Loading VirusTotal data...</span>';
-    document.getElementById('vectara-section').innerHTML = '<span class="text-muted">Loading Vectara RAG...</span>';
-    card.classList.remove('d-none');
+            // Hide and clear previous enriched results
+            const card = document.getElementById('enriched-results-card');
+            card.classList.add('d-none');
+            document.getElementById('claude-summary').innerHTML = '';
+            document.getElementById('virustotal-section').innerHTML = '';
+            document.getElementById('vectara-section').innerHTML = '';
+            // Hide old result
+            document.getElementById('result').innerHTML = '';
 
-    // Determine endpoint
-    let endpoint = '';
-    if (type === 'domain') endpoint = '/research_domain?value=' + encodeURIComponent(value);
-    else if (type === 'ip') endpoint = '/research_ip?value=' + encodeURIComponent(value);
-    else if (type === 'hash') endpoint = '/research_hash?value=' + encodeURIComponent(value);
-    else return;
+            // Show loading state
+            document.getElementById('claude-summary').innerHTML = '<span class="text-muted">Loading summary...</span>';
+            document.getElementById('virustotal-section').innerHTML = '<span class="text-muted">Loading VirusTotal data...</span>';
+            document.getElementById('vectara-section').innerHTML = '<span class="text-muted">Loading Vectara RAG...</span>';
+            card.classList.remove('d-none');
 
-    try {
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error('Error fetching data');
-        const data = await res.json();
+            // Determine endpoint
+            let endpoint = '';
+            if (type === 'domain') endpoint = '/research_domain?value=' + encodeURIComponent(value);
+            else if (type === 'ip') endpoint = '/research_ip?value=' + encodeURIComponent(value);
+            else if (type === 'hash') endpoint = '/research_hash?value=' + encodeURIComponent(value);
+            else return;
 
-        // Claude summary
-        document.getElementById('claude-summary').textContent = data.claude_summary || 'No summary available.';
+            try {
+                const res = await fetch(endpoint);
+                if (!res.ok) throw new Error('Error fetching data');
+                const data = await res.json();
 
-        // VirusTotal section (show key fields)
-        if (data.virustotal) {
-            let html = '<ul class="list-group list-group-flush">';
-            for (const [k, v] of Object.entries(data.virustotal)) {
-                html += `<li class="list-group-item"><strong>${k}:</strong> ${typeof v === 'object' ? JSON.stringify(v) : v}</li>`;
-            }
-            html += '</ul>';
-            document.getElementById('virustotal-section').innerHTML = html;
-        } else {
-            document.getElementById('virustotal-section').textContent = 'No VirusTotal data.';
-        }
+                // Claude summary
+                document.getElementById('claude-summary').textContent = data.claude_summary || 'No summary available.';
 
-        // Vectara section (show top 3 snippets)
-        if (data.vectara && data.vectara.query && data.vectara.query[0] && data.vectara.query[0].result) {
-            const results = data.vectara.query[0].result;
-            if (results.length > 0) {
-                let html = '<ul class="list-group list-group-flush">';
-                for (const r of results) {
-                    html += `<li class="list-group-item"><strong>Score:</strong> ${r.score.toFixed(2)}<br><span>${r.text}</span></li>`;
+                // VirusTotal section (show key fields)
+                if (data.virustotal) {
+                    let html = '<ul class="list-group list-group-flush">';
+                    for (const [k, v] of Object.entries(data.virustotal)) {
+                        html += `<li class="list-group-item"><strong>${k}:</strong> ${typeof v === 'object' ? JSON.stringify(v) : v}</li>`;
+                    }
+                    html += '</ul>';
+                    document.getElementById('virustotal-section').innerHTML = html;
+                } else {
+                    document.getElementById('virustotal-section').textContent = 'No VirusTotal data.';
                 }
-                html += '</ul>';
-                document.getElementById('vectara-section').innerHTML = html;
-            } else {
-                document.getElementById('vectara-section').textContent = 'No relevant Vectara results.';
+
+                // Vectara section (show top 3 snippets)
+                if (data.vectara && data.vectara.query && data.vectara.query[0] && data.vectara.query[0].result) {
+                    const results = data.vectara.query[0].result;
+                    if (results.length > 0) {
+                        let html = '<ul class="list-group list-group-flush">';
+                        for (const r of results) {
+                            html += `<li class="list-group-item"><strong>Score:</strong> ${r.score.toFixed(2)}<br><span>${r.text}</span></li>`;
+                        }
+                        html += '</ul>';
+                        document.getElementById('vectara-section').innerHTML = html;
+                    } else {
+                        document.getElementById('vectara-section').textContent = 'No relevant Vectara results.';
+                    }
+                } else {
+                    document.getElementById('vectara-section').textContent = 'No Vectara data.';
+                }
+            } catch (err) {
+                document.getElementById('claude-summary').innerHTML = '<span class="text-danger">Error loading summary.</span>';
+                document.getElementById('virustotal-section').innerHTML = '<span class="text-danger">Error loading VirusTotal data.</span>';
+                document.getElementById('vectara-section').innerHTML = '<span class="text-danger">Error loading Vectara data.</span>';
             }
-        } else {
-            document.getElementById('vectara-section').textContent = 'No Vectara data.';
-        }
-    } catch (err) {
-        document.getElementById('claude-summary').innerHTML = '<span class="text-danger">Error loading summary.</span>';
-        document.getElementById('virustotal-section').innerHTML = '<span class="text-danger">Error loading VirusTotal data.</span>';
-        document.getElementById('vectara-section').innerHTML = '<span class="text-danger">Error loading Vectara data.</span>';
+        });
     }
 });
 
