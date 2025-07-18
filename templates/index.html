@@ -28,7 +28,7 @@
         <div id="result"></div>
 
         <!-- Download VirusTotal Report as Text section -->
-        <div class="card mt-5" style="max-width: 600px; margin: 0 auto;">
+        <div class="card custom-card mt-5">
             <div class="card-body">
                 <h5 class="card-title">Download VirusTotal Report as Text</h5>
                 <div class="row g-2 align-items-center mb-2">
@@ -49,18 +49,19 @@
                 <small class="text-muted">Enter a domain, IP, or hash and select the type to download a plain text summary of the VirusTotal report.</small>
             </div>
         </div>
-    </div>
-    <!-- Vectara Search UI -->
-    <div class="card mt-5" style="max-width: 600px; margin: 0 auto;">
-        <div class="card-body">
-            <h5 class="card-title">Search Reports (Vectara RAG)</h5>
-            <form id="vectaraSearchForm" class="mb-2">
-                <div class="input-group">
-                    <input type="text" id="vectara-query" class="form-control" placeholder="Ask a question or search reports..." required>
-                    <button class="btn btn-primary" type="submit">Search</button>
-                </div>
-            </form>
-            <div id="vectara-search-results"></div>
+
+        <!-- Vectara Search UI section (moved inside main container) -->
+        <div class="card custom-card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Search Reports (Vectara RAG)</h5>
+                <form id="vectaraSearchForm" class="mb-2">
+                    <div class="input-group">
+                        <input type="text" id="vectara-query" class="form-control" placeholder="Ask a question or search reports..." required>
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </div>
+                </form>
+                <div id="vectara-search-results"></div>
+            </div>
         </div>
     </div>
     <script src="/static/app.js?v=20250718"></script>

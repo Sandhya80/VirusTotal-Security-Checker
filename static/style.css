@@ -1,3 +1,54 @@
+/* Custom card styling for main features */
+.custom-card {
+    max-width: 600px;
+    margin: 0 auto 2rem auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 1.5px 6px rgba(0,0,0,0.03);
+    border-radius: 1rem;
+    border: 1px solid #e3e3e3;
+    background: #fff;
+    transition: box-shadow 0.2s;
+}
+.custom-card:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 3px 12px rgba(0,0,0,0.06);
+}
+
+/* Improve spacing for cards and container */
+.container.py-5 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+}
+
+/* Card titles for better visual hierarchy */
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+/* Button improvements */
+.btn-primary, .btn-success {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+/* Input and select improvements */
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    min-height: 2.5rem;
+}
+
+/* Responsive tweaks for mobile */
+@media (max-width: 600px) {
+    .custom-card {
+        max-width: 100%;
+        margin: 0 0 1.5rem 0;
+    }
+    .container.py-5 {
+        padding: 1rem !important;
+    }
+}
 .badge.bg-danger {
     background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
     color: #fff !important;
