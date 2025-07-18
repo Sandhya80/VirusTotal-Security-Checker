@@ -1,11 +1,11 @@
 // Vectara Search UI logic
 document.addEventListener('DOMContentLoaded', function() {
-    const searchForm = document.getElementById('vectaraSearchForm');
-    if (searchForm) {
-        searchForm.addEventListener('submit', async function(e) {
+    const searchFormRAG = document.getElementById('vectaraSearchFormRAG');
+    if (searchFormRAG) {
+        searchFormRAG.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const query = document.getElementById('vectara-query').value.trim();
-            const resultsDiv = document.getElementById('vectara-search-results');
+            const query = document.getElementById('vectara-query-rag').value.trim();
+            const resultsDiv = document.getElementById('vectara-search-results-rag');
             if (!query) return;
             resultsDiv.innerHTML = '<div class="text-center">Searching...</div>';
             try {
