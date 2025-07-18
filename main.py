@@ -266,7 +266,10 @@ async def research_domain(value: str = Query(..., description="Domain name to re
     else:
         prompt += "No relevant Vectara results found.\n"
     prompt += "\nSummarize the findings and answer: What do you know about this domain?"
-    claude_summary = ask_claude(prompt)
+    try:
+        claude_summary = ask_claude(prompt)
+    except Exception as e:
+        claude_summary = f"Claude summary unavailable: {str(e)}"
 
     return {
         "virustotal": parsed,
@@ -359,7 +362,10 @@ async def research_ip(value: str = Query(..., description="IP address to researc
     else:
         prompt += "No relevant Vectara results found.\n"
     prompt += "\nSummarize the findings and answer: What do you know about this IP?"
-    claude_summary = ask_claude(prompt)
+    try:
+        claude_summary = ask_claude(prompt)
+    except Exception as e:
+        claude_summary = f"Claude summary unavailable: {str(e)}"
 
     return {
         "virustotal": parsed,
@@ -452,7 +458,10 @@ async def research_hash(value: str = Query(..., description="File hash to resear
     else:
         prompt += "No relevant Vectara results found.\n"
     prompt += "\nSummarize the findings and answer: What do you know about this file hash?"
-    claude_summary = ask_claude(prompt)
+    try:
+        claude_summary = ask_claude(prompt)
+    except Exception as e:
+        claude_summary = f"Claude summary unavailable: {str(e)}"
 
     return {
         "virustotal": parsed,
@@ -621,9 +630,12 @@ async def upload_report_to_vectara(request: VectaraUploadRequest):
 def ask_claude(prompt: str, max_tokens: int = 300) -> str:
     if not ANTHROPIC_API_KEY:
         return "Claude API key not configured."
-    response = claude_client.completions.create(
-        model="claude-3-opus-20240229",
-        max_tokens_to_sample=max_tokens,
-        prompt=f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}"
-    )
-    return response.completion.strip()
+    try:
+        response = claude_client.completions.create(
+            model="claude-3-opus-20240229",
+            max_tokens_to_sample=max_tokens,
+            prompt=f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}"
+        )
+        return response.completion.strip()
+    except Exception as e:
+        return f"Claude API error: {str(e)}"
