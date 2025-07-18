@@ -225,7 +225,54 @@ async def research_domain(value: str = Query(..., description="Domain name to re
         asyncio.create_task(upload_vectara())
     except Exception:
         pass
-    return parsed
+
+    # --- Vectara RAG search for this domain ---
+    vectara_search_results = None
+    try:
+        vectara_query_url = "https://api.vectara.io/v1/query"
+        vectara_search_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('VECTARA_API_KEY')}",
+            "customer-id": os.getenv('VECTARA_CUSTOMER_ID')
+        }
+        vectara_search_payload = {
+            "query": [
+                {
+                    "query": value,
+                    "corpusKey": [{
+                        "customerId": os.getenv('VECTARA_CUSTOMER_ID'),
+                        "corpusId": os.getenv('VECTARA_CORPUS_ID')
+                    }],
+                    "numResults": 3
+                }
+            ]
+        }
+        async with httpx.AsyncClient() as client:
+            search_response = await client.post(vectara_query_url, headers=vectara_search_headers, json=vectara_search_payload)
+            if search_response.status_code == 200:
+                vectara_search_results = search_response.json()
+            else:
+                vectara_search_results = {"error": f"Vectara search error: {search_response.text}"}
+    except Exception as e:
+        vectara_search_results = {"error": str(e)}
+
+    # --- Call Claude with both VirusTotal and Vectara data ---
+    prompt = f"You are a security analyst. Here is a VirusTotal report for the domain '{value}':\n{vt_report_to_text(vt_data, 'domain')}\n\nHere are relevant snippets from the Vectara corpus:\n"
+    if vectara_search_results and 'query' in vectara_search_results and vectara_search_results['query']:
+        for result in vectara_search_results['query'][0].get('result', []):
+            snippet = result.get('text', '')
+            score = result.get('score', 0)
+            prompt += f"- (Score: {score:.2f}) {snippet}\n"
+    else:
+        prompt += "No relevant Vectara results found.\n"
+    prompt += "\nSummarize the findings and answer: What do you know about this domain?"
+    claude_summary = ask_claude(prompt)
+
+    return {
+        "virustotal": parsed,
+        "vectara": vectara_search_results,
+        "claude_summary": claude_summary
+    }
 
 # Endpoint to research an IP address using VirusTotal API v3
 @app.get("/research_ip")
@@ -271,7 +318,54 @@ async def research_ip(value: str = Query(..., description="IP address to researc
         asyncio.create_task(upload_vectara())
     except Exception:
         pass
-    return parsed
+
+    # --- Vectara RAG search for this IP ---
+    vectara_search_results = None
+    try:
+        vectara_query_url = "https://api.vectara.io/v1/query"
+        vectara_search_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('VECTARA_API_KEY')}",
+            "customer-id": os.getenv('VECTARA_CUSTOMER_ID')
+        }
+        vectara_search_payload = {
+            "query": [
+                {
+                    "query": value,
+                    "corpusKey": [{
+                        "customerId": os.getenv('VECTARA_CUSTOMER_ID'),
+                        "corpusId": os.getenv('VECTARA_CORPUS_ID')
+                    }],
+                    "numResults": 3
+                }
+            ]
+        }
+        async with httpx.AsyncClient() as client:
+            search_response = await client.post(vectara_query_url, headers=vectara_search_headers, json=vectara_search_payload)
+            if search_response.status_code == 200:
+                vectara_search_results = search_response.json()
+            else:
+                vectara_search_results = {"error": f"Vectara search error: {search_response.text}"}
+    except Exception as e:
+        vectara_search_results = {"error": str(e)}
+
+    # --- Call Claude with both VirusTotal and Vectara data ---
+    prompt = f"You are a security analyst. Here is a VirusTotal report for the IP '{value}':\n{vt_report_to_text(vt_data, 'ip')}\n\nHere are relevant snippets from the Vectara corpus:\n"
+    if vectara_search_results and 'query' in vectara_search_results and vectara_search_results['query']:
+        for result in vectara_search_results['query'][0].get('result', []):
+            snippet = result.get('text', '')
+            score = result.get('score', 0)
+            prompt += f"- (Score: {score:.2f}) {snippet}\n"
+    else:
+        prompt += "No relevant Vectara results found.\n"
+    prompt += "\nSummarize the findings and answer: What do you know about this IP?"
+    claude_summary = ask_claude(prompt)
+
+    return {
+        "virustotal": parsed,
+        "vectara": vectara_search_results,
+        "claude_summary": claude_summary
+    }
 
 # Endpoint to research a file hash using VirusTotal API v3
 @app.get("/research_hash")
@@ -317,7 +411,54 @@ async def research_hash(value: str = Query(..., description="File hash to resear
         asyncio.create_task(upload_vectara())
     except Exception:
         pass
-    return parsed
+
+    # --- Vectara RAG search for this hash ---
+    vectara_search_results = None
+    try:
+        vectara_query_url = "https://api.vectara.io/v1/query"
+        vectara_search_headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('VECTARA_API_KEY')}",
+            "customer-id": os.getenv('VECTARA_CUSTOMER_ID')
+        }
+        vectara_search_payload = {
+            "query": [
+                {
+                    "query": value,
+                    "corpusKey": [{
+                        "customerId": os.getenv('VECTARA_CUSTOMER_ID'),
+                        "corpusId": os.getenv('VECTARA_CORPUS_ID')
+                    }],
+                    "numResults": 3
+                }
+            ]
+        }
+        async with httpx.AsyncClient() as client:
+            search_response = await client.post(vectara_query_url, headers=vectara_search_headers, json=vectara_search_payload)
+            if search_response.status_code == 200:
+                vectara_search_results = search_response.json()
+            else:
+                vectara_search_results = {"error": f"Vectara search error: {search_response.text}"}
+    except Exception as e:
+        vectara_search_results = {"error": str(e)}
+
+    # --- Call Claude with both VirusTotal and Vectara data ---
+    prompt = f"You are a security analyst. Here is a VirusTotal report for the hash '{value}':\n{vt_report_to_text(vt_data, 'hash')}\n\nHere are relevant snippets from the Vectara corpus:\n"
+    if vectara_search_results and 'query' in vectara_search_results and vectara_search_results['query']:
+        for result in vectara_search_results['query'][0].get('result', []):
+            snippet = result.get('text', '')
+            score = result.get('score', 0)
+            prompt += f"- (Score: {score:.2f}) {snippet}\n"
+    else:
+        prompt += "No relevant Vectara results found.\n"
+    prompt += "\nSummarize the findings and answer: What do you know about this file hash?"
+    claude_summary = ask_claude(prompt)
+
+    return {
+        "virustotal": parsed,
+        "vectara": vectara_search_results,
+        "claude_summary": claude_summary
+    }
 
 from fastapi.responses import PlainTextResponse
 

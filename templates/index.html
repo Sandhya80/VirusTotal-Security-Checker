@@ -25,7 +25,27 @@
             </div>
             <button type="submit" class="btn btn-primary w-100">Check Security</button>
         </form>
-        <div id="result"></div>
+        <!-- Enriched Results Card -->
+        <div id="enriched-results-card" class="card custom-card mt-4 d-none">
+            <div class="card-body">
+                <h5 class="card-title">Security Intelligence Summary</h5>
+                <div class="mb-3">
+                    <strong>Purpose:</strong> This section provides an AI-enriched summary and detailed findings for your input (domain, IP, or hash), combining VirusTotal, Vectara RAG, and Claude LLM insights.
+                </div>
+                <div class="mb-3">
+                    <strong>Claude Summary:</strong>
+                    <div id="claude-summary" class="enriched-section"></div>
+                </div>
+                <div class="mb-3">
+                    <strong>VirusTotal Report (Key Data):</strong>
+                    <div id="virustotal-section" class="enriched-section"></div>
+                </div>
+                <div class="mb-3">
+                    <strong>Vectara RAG Snippets:</strong>
+                    <div id="vectara-section" class="enriched-section"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- Download VirusTotal Report as Text section -->
         <div class="card custom-card mt-5">
