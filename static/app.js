@@ -92,15 +92,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!res.ok) throw new Error('Error fetching data');
                 const data = await res.json();
 
-                // Claude summary
-                if (claudeSummary) claudeSummary.textContent = data.claude_summary || 'No summary available.';
+                // Claude summary with color highlights for keywords
+                if (claudeSummary) {
+                    let summary = data.claude_summary || 'No summary available.';
+                    // Highlight keywords
+                    summary = summary.replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
+                        .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
+                        .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
+                        .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
+                    claudeSummary.innerHTML = `<div class="alert alert-info mb-2">${summary}</div>`;
+                }
 
-                // VirusTotal section (show key fields)
+                // VirusTotal section (show key fields with color-coded status)
                 if (vtSection) {
                     if (data.virustotal) {
                         let html = '<ul class="list-group list-group-flush">';
                         for (const [k, v] of Object.entries(data.virustotal)) {
-                            html += `<li class="list-group-item"><strong>${k}:</strong> ${typeof v === 'object' ? JSON.stringify(v) : v}</li>`;
+                            if (k === 'status') {
+                                // Color code the status
+                                let badgeClass = 'bg-secondary';
+                                if (v.toLowerCase() === 'malicious') badgeClass = 'bg-danger';
+                                else if (v.toLowerCase() === 'suspicious') badgeClass = 'bg-warning text-dark';
+                                else if (v.toLowerCase() === 'harmless') badgeClass = 'bg-success';
+                                else if (v.toLowerCase() === 'undetected') badgeClass = 'bg-secondary';
+                                html += `<li class="list-group-item"><strong>${k}:</strong> <span class="badge ${badgeClass}">${v}</span></li>`;
+                            } else {
+                                html += `<li class="list-group-item"><strong>${k}:</strong> ${typeof v === 'object' ? JSON.stringify(v) : v}</li>`;
+                            }
                         }
                         html += '</ul>';
                         vtSection.innerHTML = html;
@@ -109,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                // Vectara section (show top 3 snippets)
+                // Vectara section (show top 3 snippets, no color change)
                 if (vectaraSection) {
                     if (data.vectara && data.vectara.query && data.vectara.query[0] && data.vectara.query[0].result) {
                         const results = data.vectara.query[0].result;
