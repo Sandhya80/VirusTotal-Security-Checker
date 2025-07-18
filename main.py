@@ -631,11 +631,14 @@ def ask_claude(prompt: str, max_tokens: int = 300) -> str:
     if not ANTHROPIC_API_KEY:
         return "Claude API key not configured."
     try:
-        response = claude_client.completions.create(
+        message = f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}"
+        response = claude_client.messages.create(
             model="claude-3-5-sonnet-20240620",
-            max_tokens_to_sample=max_tokens,
-            prompt=f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}"
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "user", "content": message}
+            ]
         )
-        return response.completion.strip()
+        return response.content[0].text.strip()
     except Exception as e:
         return f"Claude API error: {str(e)}"
