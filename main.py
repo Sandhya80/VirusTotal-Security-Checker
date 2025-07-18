@@ -632,7 +632,7 @@ def ask_claude(prompt: str, max_tokens: int = 300) -> str:
         return "Claude API key not configured."
     try:
         response = claude_client.completions.create(
-            model="claude-3-opus-20240229",
+            model="claude-3-5-sonnet-20240620",
             max_tokens_to_sample=max_tokens,
             prompt=f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}"
         )
