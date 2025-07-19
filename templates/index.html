@@ -79,19 +79,21 @@
         </div>
       </div>
     </div>
-            <div class="mb-3">
-                <label for="inputType" class="form-label">Type</label>
-                <select class="form-select" id="inputType" required>
-                    <option value="domain">Domain</option>
-                    <option value="ip">IP Address</option>
-                    <option value="hash">File Hash</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="inputValue" class="form-label">Value</label>
-                <input type="text" class="form-control" id="inputValue" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Check Security</button>
+            <form id="checkForm">
+                <div class="mb-3">
+                    <label for="inputType" class="form-label">Type</label>
+                    <select class="form-select" id="inputType" required>
+                        <option value="domain">Domain</option>
+                        <option value="ip">IP Address</option>
+                        <option value="hash">File Hash</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="inputValue" class="form-label">Value</label>
+                    <input type="text" class="form-control" id="inputValue" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Check Security</button>
+            </form>
         </form>
         <!-- Enriched Results Card -->
         <div id="enriched-results-card" class="card custom-card mt-4 d-none">
