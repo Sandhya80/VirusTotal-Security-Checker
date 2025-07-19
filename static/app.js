@@ -1,3 +1,122 @@
+// --- Auth State ---
+let authToken = localStorage.getItem('authToken') || null;
+let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+function updateAuthUI() {
+  const authNavbar = document.getElementById('auth-navbar');
+  if (!authNavbar) return;
+  authNavbar.innerHTML = '';
+  if (authToken && currentUser) {
+    // Show user dropdown and logout
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dropdown';
+    dropdown.innerHTML = `
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle"></i> ${currentUser.full_name || currentUser.email}
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+        <li><span class="dropdown-item-text">${currentUser.email}</span></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="#" id="logout-link">Logout</a></li>
+      </ul>
+    `;
+    authNavbar.appendChild(dropdown);
+    document.getElementById('logout-link').onclick = handleLogout;
+  } else {
+    // Show login/register
+    authNavbar.innerHTML = `
+      <button class="btn btn-outline-primary me-2" id="login-btn" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+      <button class="btn btn-primary" id="register-btn" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
+    `;
+  }
+}
+
+function handleRegister(e) {
+  e.preventDefault();
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value;
+  const fullName = document.getElementById('register-fullname').value.trim();
+  const errorDiv = document.getElementById('register-error');
+  errorDiv.style.display = 'none';
+  fetch('/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, full_name: fullName })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (ok) {
+        // Auto-login after register
+        document.getElementById('registerForm').reset();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('registerModal')).hide();
+        handleLoginDirect(email, password);
+      } else {
+        errorDiv.textContent = data.detail || data.msg || 'Registration failed.';
+        errorDiv.style.display = '';
+      }
+    })
+    .catch(() => {
+      errorDiv.textContent = 'Registration failed.';
+      errorDiv.style.display = '';
+    });
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  handleLoginDirect(email, password);
+}
+
+function handleLoginDirect(email, password) {
+  const errorDiv = document.getElementById('login-error');
+  errorDiv.style.display = 'none';
+  const form = new URLSearchParams();
+  form.append('username', email);
+  form.append('password', password);
+  fetch('/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (ok && data.access_token) {
+        authToken = data.access_token;
+        currentUser = data.user;
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        document.getElementById('loginForm').reset();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).hide();
+        updateAuthUI();
+      } else {
+        errorDiv.textContent = data.detail || 'Login failed.';
+        errorDiv.style.display = '';
+      }
+    })
+    .catch(() => {
+      errorDiv.textContent = 'Login failed.';
+      errorDiv.style.display = '';
+    });
+}
+
+function handleLogout(e) {
+  e && e.preventDefault();
+  authToken = null;
+  currentUser = null;
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('currentUser');
+  updateAuthUI();
+}
+
+// Attach handlers on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function () {
+  updateAuthUI();
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.onsubmit = handleLogin;
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) registerForm.onsubmit = handleRegister;
+});
 // Vectara Search UI logic
 document.addEventListener('DOMContentLoaded', function() {
     const searchFormRAG = document.getElementById('vectaraSearchFormRAG');

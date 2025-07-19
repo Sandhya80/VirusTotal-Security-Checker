@@ -25,9 +25,10 @@ A modern, full-stack web application for checking the security status of domains
 ### How to Use the VirusTotal Security Checker
 
 
+
 1. **Select Type:** Choose whether you want to check a Domain, IP Address, or File Hash from the dropdown menu.
 2. **Enter Value:** Input the domain name (e.g., example.com), IP address, or file hash (MD5, SHA1, or SHA256).
-   - For IP research, you can enter either a plain IPv4 address (e.g., "192.0.2.1") or an IPv4 address with CIDR notation (e.g., "192.0.2.0/24").
+    - For IP research, you can enter either a plain IPv4 address (e.g., "192.0.2.1") or an IPv4 address with CIDR notation (e.g., "192.0.2.0/24").
 3. **Check Security:** Click the "Check Security" button to analyze the input using VirusTotal, Vectara, and Claude LLM.
 4. **View Results:**
     - See the overall status (Malicious, Suspicious, Harmless, Undetected) with color-coded badges.
@@ -78,31 +79,35 @@ A modern, full-stack web application for checking the security status of domains
 
 1. **Clone the repository:**
 
-    ```bash
-    git clone https://github.com/Sandhya80/hello_world_fastapi.git
-    cd hello_world_fastapi
-    ```
+
+```bash
+git clone https://github.com/Sandhya80/hello_world_fastapi.git
+cd hello_world_fastapi
+```
 
 2. **Install dependencies:**
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+
+```bash
+pip install -r requirements.txt
+```
 
 
 3. **Set up environment variables:**
 
     - Create a `.env` file in the project root:
 
-      ```env
-      VT_API_KEY=your_virustotal_api_key_here
-      VECTARA_API_KEY=your_vectara_api_key_here
-      VECTARA_CUSTOMER_ID=your_vectara_customer_id   # (numeric, e.g. 1234)
-      VECTARA_CORPUS_ID=your_vectara_corpus_id       # (numeric, e.g. 4)
-      ANTHROPIC_API_KEY=your_anthropic_api_key_here
-      ```
+
+```env
+VT_API_KEY=your_virustotal_api_key_here
+VECTARA_API_KEY=your_vectara_api_key_here
+VECTARA_CUSTOMER_ID=your_vectara_customer_id   # (numeric, e.g. 1234)
+VECTARA_CORPUS_ID=your_vectara_corpus_id       # (numeric, e.g. 4)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
 
 ---
+
 
 
 
@@ -110,25 +115,102 @@ A modern, full-stack web application for checking the security status of domains
 
 1. **Run the application:**
 
-    ```bash
-    uvicorn main:app --reload
-    ```
+
+```bash
+uvicorn main:app --reload
+```
 
 
 2. **Open your browser and visit:**
 
-    - [http://localhost:8000/](http://localhost:8000/) for the local web interface
-    - [http://localhost:8000/docs](http://localhost:8000/docs) for local API docs (Swagger UI)
-    - [https://virustotal-security-checker-1ba82364afaa.herokuapp.com/](https://virustotal-security-checker-1ba82364afaa.herokuapp.com/) for the deployed web app on Heroku
+
+- [http://localhost:8000/](http://localhost:8000/) for the local web interface
+- [http://localhost:8000/docs](http://localhost:8000/docs) for local API docs (Swagger UI)
+- [https://virustotal-security-checker-1ba82364afaa.herokuapp.com/](https://virustotal-security-checker-1ba82364afaa.herokuapp.com/) for the deployed web app on Heroku
+
+---
+
+## Deployment
+
+### Deploy with Docker
+
+
+1. **Build the Docker image:**
+
+    ```bash
+    docker build -t virustotal-security-checker .
+    ```
+
+2. **Run the container:**
+
+    ```bash
+    docker run -d -p 8000:8000 --env-file .env virustotal-security-checker
+    ```
+
+3. **Access the app:**
+    - Open [http://localhost:8000/](http://localhost:8000/) in your browser.
+
+**Note:** You may need to create a `Dockerfile` if not present. Example:
+
+```Dockerfile
+FROM python:3.10-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+---
+
+### Deploy to Azure App Service (Linux)
+
+
+1. **Install Azure CLI** and login:
+
+    ```bash
+    az login
+    ```
+
+2. **Create a resource group and App Service plan:**
+
+    ```bash
+    az group create --name myResourceGroup --location eastus
+    az appservice plan create --name myPlan --resource-group myResourceGroup --sku B1 --is-linux
+    ```
+
+3. **Create the Web App:**
+
+    ```bash
+    az webapp create --resource-group myResourceGroup --plan myPlan --name <your-app-name> --runtime "PYTHON|3.10"
+    ```
+
+4. **Deploy your code:**
+
+    ```bash
+    az webapp deploy --resource-group myResourceGroup --name <your-app-name> --src-path .
+    ```
+
+5. **Set environment variables:**
+
+    ```bash
+    az webapp config appsettings set --resource-group myResourceGroup --name <your-app-name> --settings @.env
+    ```
+
+6. **Browse to your app:**
+    - Visit `https://<your-app-name>.azurewebsites.net/`
+
+**Note:** For production, consider using Azure Container Apps or Azure Web App for Containers for Docker-based deployment.
 
 ---
 
 ## Test Scripts
 
+
 - **Claude LLM Test:**
-    - `python test/test_claude.py` — Standalone test for Anthropic Claude API integration.
+  - `python test/test_claude.py` — Standalone test for Anthropic Claude API integration.
 - **Vectara Upload/Search Test:**
-    - `python test/test_vectara.py` — Standalone test for Vectara upload and search integration.
+  - `python test/test_vectara.py` — Standalone test for Vectara upload and search integration.
 
 ---
 

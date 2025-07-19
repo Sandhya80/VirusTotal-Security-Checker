@@ -13,7 +13,76 @@
             <img src="static/Images/CyberSecurity.gif" alt="Cyber Security" style="height:60px;width:auto;object-fit:contain;" class="me-3">
             <h1 class="m-0">VirusTotal Security Checker</h1>
         </div>
-        <form id="checkForm" class="mb-4">
+    <!-- Auth Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom mb-3">
+      <div class="container-fluid">
+        <div class="d-flex align-items-center">
+          <img src="/static/images/CyberSecurity.gif" alt="Cyber Security" style="height:48px;width:auto;object-fit:contain;" class="me-2">
+          <span class="navbar-brand fw-bold fs-3">VirusTotal Security Checker</span>
+        </div>
+        <div class="ms-auto d-flex align-items-center" id="auth-navbar">
+          <button class="btn btn-outline-primary me-2" id="login-btn" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+          <button class="btn btn-primary" id="register-btn" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">Login</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="loginForm">
+              <div class="mb-3">
+                <label for="login-email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="login-email" required autocomplete="username">
+              </div>
+              <div class="mb-3">
+                <label for="login-password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="login-password" required autocomplete="current-password">
+              </div>
+              <div id="login-error" class="text-danger mb-2" style="display:none;"></div>
+              <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="registerModalLabel">Register</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="registerForm">
+              <div class="mb-3">
+                <label for="register-email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="register-email" required autocomplete="username">
+              </div>
+              <div class="mb-3">
+                <label for="register-password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="register-password" required autocomplete="new-password">
+              </div>
+              <div class="mb-3">
+                <label for="register-fullname" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="register-fullname" autocomplete="name">
+              </div>
+              <div id="register-error" class="text-danger mb-2" style="display:none;"></div>
+              <button type="submit" class="btn btn-primary w-100">Register</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
             <div class="mb-3">
                 <label for="inputType" class="form-label">Type</label>
                 <select class="form-select" id="inputType" required>

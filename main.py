@@ -1,10 +1,138 @@
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+from typing import Optional
+
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+from typing import Optional
+import sqlalchemy as sa
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import select
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+# --- Auth config ---
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+# --- SQLAlchemy async setup ---
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+Base = declarative_base()
+
+# --- User DB model ---
+class UserDB(Base):
+    __tablename__ = "users"
+    id = sa.Column(sa.Integer, primary_key=True, index=True)
+    email = sa.Column(sa.String, unique=True, index=True, nullable=False)
+    full_name = sa.Column(sa.String, nullable=True)
+    hashed_password = sa.Column(sa.String, nullable=False)
+    disabled = sa.Column(sa.Boolean, default=False)
+
+# --- Pydantic models ---
+from pydantic import BaseModel
+class User(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    disabled: Optional[bool] = False
+
+class UserInDB(User):
+    hashed_password: str
+
+# --- DB utility ---
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+async def get_user(email: str, db: AsyncSession):
+    result = await db.execute(select(UserDB).where(UserDB.email == email))
+    user_row = result.scalar_one_or_none()
+    if user_row:
+        return UserInDB(
+            email=user_row.email,
+            full_name=user_row.full_name,
+            disabled=user_row.disabled,
+            hashed_password=user_row.hashed_password
+        )
+    return None
+
+async def authenticate_user(email: str, password: str, db: AsyncSession):
+    user = await get_user(email, db)
+    if not user or not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+from fastapi import Depends
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    user = await get_user(email, db)
+    if user is None:
+        raise credentials_exception
+    return user
+
+# --- Auth endpoints ---
+from fastapi import Body, HTTPException
+@app.post("/register")
+async def register(email: str = Body(...), password: str = Body(...), full_name: str = Body(None), db: AsyncSession = Depends(get_db)):
+    # Check if user exists
+    result = await db.execute(select(UserDB).where(UserDB.email == email))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed_password = get_password_hash(password)
+    user_db = UserDB(email=email, full_name=full_name, hashed_password=hashed_password, disabled=False)
+    db.add(user_db)
+    await db.commit()
+    return {"msg": "User registered successfully"}
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    user = await authenticate_user(form_data.username, form_data.password, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    access_token = create_access_token(data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return {"access_token": access_token, "token_type": "bearer", "user": {"email": user.email, "full_name": user.full_name}}
+
+@app.post("/logout")
+async def logout():
+    # For JWT, logout is handled client-side by deleting the token
+    return {"msg": "Logged out"}
 
 # --- Imports ---
 import os
 import re
 from dotenv import load_dotenv
 import httpx
-from fastapi import FastAPI, HTTPException, Query, Request, Body
+from fastapi import FastAPI, HTTPException, Query, Request, Body, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -23,6 +151,12 @@ VT_API_KEY = os.getenv("VT_API_KEY")
 
 # --- FastAPI app ---
 app = FastAPI()
+
+# --- Create DB tables at startup ---
+@app.on_event("startup")
+async def on_startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 # --- Vectara Search Endpoint ---
 class VectaraSearchRequest(BaseModel):
