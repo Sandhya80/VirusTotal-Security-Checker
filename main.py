@@ -1,4 +1,3 @@
-
 # --- Standard library imports ---
 import os
 import re
@@ -34,6 +33,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 VECTARA_API_KEY = os.getenv("VECTARA_API_KEY")
 VECTARA_CUSTOMER_ID = os.getenv("VECTARA_CUSTOMER_ID")
 VECTARA_CORPUS_ID = os.getenv("VECTARA_CORPUS_ID")
