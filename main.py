@@ -1,29 +1,54 @@
-from passlib.context import CryptContext
-from jose import JWTError, jwt
+
+# --- Standard library imports ---
+import os
+import re
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
-from typing import Optional
+# --- Third-party imports ---
+from dotenv import load_dotenv
+import httpx
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import select
-import os
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
-# --- Auth config ---
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from fastapi import (
+    FastAPI, HTTPException, Query, Request, Body, Depends
+)
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import (
+    BaseModel, Field, constr, condecimal, conint, validator
+)
+import anthropic
+
+# --- Load environment variables ---
+load_dotenv()
+
+# --- Environment variables ---
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+VECTARA_API_KEY = os.getenv("VECTARA_API_KEY")
+VECTARA_CUSTOMER_ID = os.getenv("VECTARA_CUSTOMER_ID")
+VECTARA_CORPUS_ID = os.getenv("VECTARA_CORPUS_ID")
+VECTARA_MCP_URL = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+VT_API_KEY = os.getenv("VT_API_KEY")
 
+# --- FastAPI app ---
+app = FastAPI()
+
+# --- Auth config ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 # --- SQLAlchemy async setup ---
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 Base = declarative_base()
@@ -38,7 +63,6 @@ class UserDB(Base):
     disabled = sa.Column(sa.Boolean, default=False)
 
 # --- Pydantic models ---
-from pydantic import BaseModel
 class User(BaseModel):
     email: str
     full_name: Optional[str] = None
@@ -82,7 +106,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-from fastapi import Depends
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=401,
@@ -102,7 +125,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     return user
 
 # --- Auth endpoints ---
-from fastapi import Body, HTTPException
 @app.post("/register")
 async def register(email: str = Body(...), password: str = Body(...), full_name: str = Body(None), db: AsyncSession = Depends(get_db)):
     # Check if user exists
@@ -127,30 +149,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 async def logout():
     # For JWT, logout is handled client-side by deleting the token
     return {"msg": "Logged out"}
-
-# --- Imports ---
-import re
-from dotenv import load_dotenv
-import httpx
-from fastapi import FastAPI, HTTPException, Query, Request, Body, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, constr, condecimal, conint, Field
-
-# --- Load environment variables ---
-load_dotenv()
-
-# --- Environment variables ---
-VECTARA_API_KEY = os.getenv("VECTARA_API_KEY")
-VECTARA_CUSTOMER_ID = os.getenv("VECTARA_CUSTOMER_ID")
-VECTARA_CORPUS_ID = os.getenv("VECTARA_CORPUS_ID")
-VECTARA_MCP_URL = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-VT_API_KEY = os.getenv("VT_API_KEY")
-
-# --- FastAPI app ---
-app = FastAPI()
 
 # --- Create DB tables at startup ---
 @app.on_event("startup")
