@@ -12,6 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import select
+import os
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 # --- Auth config ---
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
@@ -128,7 +129,6 @@ async def logout():
     return {"msg": "Logged out"}
 
 # --- Imports ---
-import os
 import re
 from dotenv import load_dotenv
 import httpx
