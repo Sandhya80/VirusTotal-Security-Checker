@@ -14,15 +14,18 @@ from sqlalchemy import select
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import (
-    FastAPI, HTTPException, Query, Request, Body, Depends
+    FastAPI, HTTPException, Query, Request, Body, Depends, status
 )
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import (
-    BaseModel, Field, constr, condecimal, conint, validator
+    BaseModel, Field, constr, condecimal, conint, validator, EmailStr
 )
+from email.message import EmailMessage
+import aiosmtplib
+import secrets
 import anthropic
 
 # --- Load environment variables ---
@@ -64,15 +67,19 @@ class UserDB(Base):
     full_name = sa.Column(sa.String, nullable=True)
     hashed_password = sa.Column(sa.String, nullable=False)
     disabled = sa.Column(sa.Boolean, default=False)
+    is_confirmed = sa.Column(sa.Boolean, default=False)
+    confirm_token = sa.Column(sa.String, nullable=True)
 
 # --- Pydantic models ---
 class User(BaseModel):
-    email: str
+    email: EmailStr
     full_name: Optional[str] = None
     disabled: Optional[bool] = False
+    is_confirmed: Optional[bool] = False
 
 class UserInDB(User):
     hashed_password: str
+    confirm_token: Optional[str] = None
 
 # --- DB utility ---
 async def get_db():
@@ -128,17 +135,64 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     return user
 
 # --- Auth endpoints ---
+
+# Email confirmation settings (customize as needed)
+EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@example.com")
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASS = os.getenv("SMTP_PASS")
+APP_URL = os.getenv("APP_URL", "https://virustotal-security-checker-1ba82364afaa.herokuapp.com")
+
+async def send_confirmation_email(to_email: str, token: str):
+    msg = EmailMessage()
+    msg["Subject"] = "Confirm your registration"
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_email
+    confirm_link = f"{APP_URL}/confirm_email?token={token}"
+    msg.set_content(f"Thank you for registering. Please confirm your email by clicking this link: {confirm_link}")
+    await aiosmtplib.send(
+        msg,
+        hostname=SMTP_HOST,
+        port=SMTP_PORT,
+        username=SMTP_USER,
+        password=SMTP_PASS,
+        start_tls=True
+    )
+
 @app.post("/register")
-async def register(email: str = Body(...), password: str = Body(...), full_name: str = Body(None), db: AsyncSession = Depends(get_db)):
+async def register(
+    email: EmailStr = Body(...),
+    password: str = Body(...),
+    full_name: str = Body(None),
+    db: AsyncSession = Depends(get_db)
+):
     # Check if user exists
     result = await db.execute(select(UserDB).where(UserDB.email == email))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
     hashed_password = get_password_hash(password)
-    user_db = UserDB(email=email, full_name=full_name, hashed_password=hashed_password, disabled=False)
+    token = secrets.token_urlsafe(32)
+    user_db = UserDB(email=email, full_name=full_name, hashed_password=hashed_password, disabled=False, is_confirmed=False, confirm_token=token)
     db.add(user_db)
     await db.commit()
-    return {"msg": "User registered successfully"}
+    try:
+        await send_confirmation_email(email, token)
+    except Exception as e:
+        return {"msg": "User registered, but failed to send confirmation email.", "error": str(e)}
+    return {"msg": "User registered successfully. Please check your email to confirm your account."}
+
+@app.get("/confirm_email")
+async def confirm_email(token: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(UserDB).where(UserDB.confirm_token == token))
+    user = result.scalar_one_or_none()
+    if not user:
+        return HTMLResponse("<h3>Invalid or expired confirmation link.</h3>", status_code=404)
+    user.is_confirmed = True
+    user.confirm_token = None
+    db.add(user)
+    await db.commit()
+    return HTMLResponse("<h3>Email confirmed! You can now log in.</h3>")
 
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
