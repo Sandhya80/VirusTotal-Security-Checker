@@ -327,7 +327,7 @@ function renderResult(data) {
         </div>`;
     }
     if (data.vendors) {
-        html += '<h6>Vendors <small>(click to filter)</small>:</h6>';
+        html += '<h6>Vendors <small>(top 10 by threat, click to filter)</small>:</h6>';
         html += '<div class="mb-2">';
         html += `<button class="btn btn-sm btn-danger me-1" onclick="filterVendors('malicious')">Malicious</button>`;
         html += `<button class="btn btn-sm btn-warning me-1" onclick="filterVendors('suspicious')">Suspicious</button>`;
@@ -335,11 +335,24 @@ function renderResult(data) {
         html += `<button class="btn btn-sm btn-secondary me-1" onclick="filterVendors('undetected')">Undetected</button>`;
         html += `<button class="btn btn-sm btn-outline-dark" onclick="filterVendors('all')">All</button>`;
         html += '</div>';
-        html += '<ul id="vendors-list">';
-        for (const [vendor, info] of Object.entries(data.vendors)) {
-            html += `<li data-category="${info.category}"><strong>${vendor}:</strong> <span class="badge ${badgeClass(info.category)}">${info.result}</span> <span class="text-muted small">(${info.category})</span></li>`;
+        // Sort vendors: malicious > suspicious > harmless > undetected > other, then alphabetically
+        const threatRank = { malicious: 1, suspicious: 2, harmless: 3, undetected: 4 };
+        let vendorArr = Object.entries(data.vendors);
+        vendorArr.sort((a, b) => {
+            const catA = (a[1].category || '').toLowerCase();
+            const catB = (b[1].category || '').toLowerCase();
+            const rankA = threatRank[catA] || 99;
+            const rankB = threatRank[catB] || 99;
+            if (rankA !== rankB) return rankA - rankB;
+            return a[0].localeCompare(b[0]);
+        });
+        // Show only top 10
+        const topVendors = vendorArr.slice(0, 10);
+        html += '<table class="table table-bordered table-sm mb-2" id="vendors-list"><thead><tr><th>Vendor</th><th>Result</th><th>Category</th></tr></thead><tbody>';
+        for (const [vendor, info] of topVendors) {
+            html += `<tr data-category="${info.category}"><td><strong>${vendor}</strong></td><td><span class="badge ${badgeClass(info.category)}">${info.result}</span></td><td>${info.category}</td></tr>`;
         }
-        html += '</ul>';
+        html += '</tbody></table>';
     }
     if (data.vt_permalink) {
         html += `<a href="${data.vt_permalink}" class="btn btn-outline-primary mt-2" target="_blank">View Full Report on VirusTotal</a>`;
