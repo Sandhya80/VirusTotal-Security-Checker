@@ -119,7 +119,7 @@ body {
     min-height: 100vh;
 }
 .container {
-    background: rgba(255,255,255,0.95);
+    background: rgba(235, 213, 241, 0.95);
     border-radius: 18px;
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
     padding: 2.5rem 2rem;
