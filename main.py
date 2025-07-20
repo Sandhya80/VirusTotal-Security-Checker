@@ -47,7 +47,6 @@ VECTARA_MCP_URL = os.getenv("VECTARA_MCP_URL", "https://api.vectara.io/v1/index"
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 VT_API_KEY = os.getenv("VT_API_KEY")
 
-# --- FastAPI app ---
 app = FastAPI()
 
 # --- Auth config ---
@@ -253,10 +252,11 @@ async def search_vectara(request: VectaraSearchRequest):
 load_dotenv()
 
 
-# FastAPI application for managing items and researching domains using VirusTotal API.
-app = FastAPI()
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-# Mount static files and templates
+# Mount static files and templates AFTER all routes are defined
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
