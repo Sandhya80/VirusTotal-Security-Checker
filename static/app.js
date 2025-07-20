@@ -274,35 +274,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const rankB = threatRank[catB] || 99;
                     if (rankA !== rankB) return rankA - rankB;
                     return a[0].localeCompare(b[0]);
-            let val = v;
-            if (k === 'status' && typeof v === 'string') {
-                let badgeClass = 'bg-secondary';
-                if (v.toLowerCase() === 'malicious') badgeClass = 'bg-danger';
-                else if (v.toLowerCase() === 'suspicious') badgeClass = 'bg-warning text-dark';
-                else if (v.toLowerCase() === 'harmless') badgeClass = 'bg-success';
-                else if (v.toLowerCase() === 'undetected') badgeClass = 'bg-secondary';
-                val = `<span class=\"badge ${badgeClass}\">${v}</span>`;
-            } else if (typeof v === 'string') {
-                val = v.replace(/malicious/gi, '<span class=\"badge bg-danger\">$&</span>')
-                    .replace(/suspicious/gi, '<span class=\"badge bg-warning text-dark\">$&</span>')
-                    .replace(/harmless/gi, '<span class=\"badge bg-success\">$&</span>')
-                    .replace(/undetected/gi, '<span class=\"badge bg-secondary\">$&</span>');
-            } else if (k === 'vendors' && typeof v === 'object' && v !== null) {
-                // Render vendors as a table, top 10 by threat
-                const threatRank = { malicious: 1, suspicious: 2, harmless: 3, undetected: 4 };
-                let vendorArr = Object.entries(v);
-                vendorArr.sort((a, b) => {
-                    const catA = (a[1].category || '').toLowerCase();
-                    const catB = (b[1].category || '').toLowerCase();
-                    const rankA = threatRank[catA] || 99;
-                    const rankB = threatRank[catB] || 99;
-                    if (rankA !== rankB) return rankA - rankB;
-                    return a[0].localeCompare(b[0]);
                 });
                 const topVendors = vendorArr.slice(0, 10);
-                val = '<table class=\"table table-bordered table-sm mb-2\"><thead><tr><th>Vendor</th><th>Result</th><th>Category</th></tr></thead><tbody>';
+                val = '<table class="table table-bordered table-sm mb-2"><thead><tr><th>Vendor</th><th>Result</th><th>Category</th></tr></thead><tbody>';
                 for (const [vendor, info] of topVendors) {
-                    val += `<tr><td><strong>${vendor}</strong></td><td><span class=\"badge ${badgeClass(info.category)}\">${info.result}</span></td><td>${info.category}</td></tr>`;
+                    val += `<tr><td><strong>${vendor}</strong></td><td><span class="badge ${badgeClass(info.category)}">${info.result}</span></td><td>${info.category}</td></tr>`;
                 }
                 val += '</tbody></table>';
             } else if (k === 'stats' && typeof v === 'object' && v !== null) {
@@ -321,16 +297,22 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (typeof v === 'object') {
                 val = `<pre class=\"mb-0\">${JSON.stringify(v, null, 2)}</pre>`;
             }
-            html += `<tr><td>${k}</td><td>${val}</td></tr>`;
+                        html += `<tr><td>${k}</td><td>${val}</td></tr>`;
                     }
+                    html += '</tbody></table>';
+                    vtSection.innerHTML = html;
+                } else {
+                    vtSection.innerHTML = '<span class="text-muted">No VirusTotal data available.</span>';
                 }
-            } catch (err) {
-                if (claudeSummary) claudeSummary.innerHTML = '<span class="text-danger">Error loading summary.</span>';
-                if (vtSection) vtSection.innerHTML = '<span class="text-danger">Error loading VirusTotal data.</span>';
-                if (vectaraSection) vectaraSection.innerHTML = '<span class="text-danger">Error loading Vectara data.</span>';
             }
-        });
-    }
+            // You can add similar rendering for vectaraSection if needed
+        } catch (err) {
+            if (claudeSummary) claudeSummary.innerHTML = '<span class="text-danger">Error loading summary.</span>';
+            if (vtSection) vtSection.innerHTML = '<span class="text-danger">Error loading VirusTotal data.</span>';
+            if (vectaraSection) vectaraSection.innerHTML = '<span class="text-danger">Error loading Vectara data.</span>';
+        }
+    }); // <-- Added missing parenthesis here
+}
 });
 
 function renderResult(data) {
