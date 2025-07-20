@@ -214,32 +214,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Claude summary with color highlights for keywords
                 if (claudeSummary) {
                     let summary = data.claude_summary || 'No summary available.';
-                    // Highlight keywords
-                    summary = summary.replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
-                        .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
-                        .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
-                        .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
-                    claudeSummary.innerHTML = `<div class="alert alert-info mb-2">${summary}</div>`;
+                    // Attempt to extract key findings (simple key: value lines)
+                    let findings = [];
+                    const lines = summary.split(/\n|<br\s*\/?\s*>/i);
+                    for (let line of lines) {
+                        let m = line.match(/^\s*([\w\s\-]+):\s*(.+)$/i);
+                        if (m) {
+                            findings.push({ key: m[1].trim(), value: m[2].trim() });
+                        }
+                    }
+                    if (findings.length > 0) {
+                        let table = '<table class="table table-bordered table-sm mb-2"><thead><tr><th>Finding</th><th>Value</th></tr></thead><tbody>';
+                        for (const f of findings) {
+                            let val = f.value
+                                .replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
+                                .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
+                                .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
+                                .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
+                            table += `<tr><td>${f.key}</td><td>${val}</td></tr>`;
+                        }
+                        table += '</tbody></table>';
+                        claudeSummary.innerHTML = `<div class="alert alert-info mb-2">${table}</div>`;
+                    } else {
+                        // Fallback: highlight keywords in summary text
+                        summary = summary.replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
+                            .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
+                            .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
+                            .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
+                        claudeSummary.innerHTML = `<div class="alert alert-info mb-2"><table class="table table-bordered table-sm mb-0"><tbody><tr><td>${summary}</td></tr></tbody></table></div>`;
+                    }
                 }
 
                 // VirusTotal section (show key fields with color-coded status)
                 if (vtSection) {
                     if (data.virustotal) {
-                        let html = '<ul class="list-group list-group-flush">';
+                        let html = '<table class="table table-bordered table-sm mb-2"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
                         for (const [k, v] of Object.entries(data.virustotal)) {
-                            if (k === 'status') {
-                                // Color code the status
+                            let val = v;
+                            if (k === 'status' && typeof v === 'string') {
                                 let badgeClass = 'bg-secondary';
                                 if (v.toLowerCase() === 'malicious') badgeClass = 'bg-danger';
                                 else if (v.toLowerCase() === 'suspicious') badgeClass = 'bg-warning text-dark';
                                 else if (v.toLowerCase() === 'harmless') badgeClass = 'bg-success';
                                 else if (v.toLowerCase() === 'undetected') badgeClass = 'bg-secondary';
-                                html += `<li class="list-group-item"><strong>${k}:</strong> <span class="badge ${badgeClass}">${v}</span></li>`;
-                            } else {
-                                html += `<li class="list-group-item"><strong>${k}:</strong> ${typeof v === 'object' ? JSON.stringify(v) : v}</li>`;
+                                val = `<span class="badge ${badgeClass}">${v}</span>`;
+                            } else if (typeof v === 'string') {
+                                val = v.replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
+                                    .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
+                                    .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
+                                    .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
+                            } else if (typeof v === 'object') {
+                                val = `<pre class="mb-0">${JSON.stringify(v, null, 2)}</pre>`;
                             }
+                            html += `<tr><td>${k}</td><td>${val}</td></tr>`;
                         }
-                        html += '</ul>';
+                        html += '</tbody></table>';
                         vtSection.innerHTML = html;
                     } else {
                         vtSection.textContent = 'No VirusTotal data.';
