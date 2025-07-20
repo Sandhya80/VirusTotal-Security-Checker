@@ -1,3 +1,25 @@
+# Features
+
+## User Authentication (Login & Register)
+
+- Users can register for an account using their email, password, and full name.
+- After registration, an email confirmation is sent to the user's email address using SMTP.
+- Users must confirm their email before logging in.
+- Secure login with JWT-based authentication.
+- Passwords are securely hashed and never stored in plain text.
+- Authenticated users can access all features of the app.
+
+## Email Confirmation via SMTP
+
+- The app uses SMTP to send confirmation emails to new users.
+- You must configure SMTP credentials (host, port, username, password, and sender email) in your environment variables for this feature to work.
+- Example SMTP providers: Gmail, Outlook, SendGrid, etc.
+
+# Contact
+
+For any questions, feedback, or support, please contact:
+
+**Email:** vtotalchecker@gmail.com
 
 
 # VirusTotal Security Checker (FastAPI Web App)
