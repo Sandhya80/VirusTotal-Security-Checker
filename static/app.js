@@ -223,26 +223,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             findings.push({ key: m[1].trim(), value: m[2].trim() });
                         }
                     }
+                    let table = '<table class="table table-bordered table-sm mb-2"><thead><tr><th>Finding</th><th>Value</th></tr></thead><tbody>';
                     if (findings.length > 0) {
-                        let table = '<table class="table table-bordered table-sm mb-2"><thead><tr><th>Finding</th><th>Value</th></tr></thead><tbody>';
                         for (const f of findings) {
                             let val = f.value
                                 .replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
                                 .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
                                 .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
                                 .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
-                            table += `<tr><td>${f.key}</td><td>${val}</td></tr>`;
+                            let keyVal = f.key
+                                .replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
+                                .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
+                                .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
+                                .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
+                            table += `<tr><td>${keyVal}</td><td>${val}</td></tr>`;
                         }
-                        table += '</tbody></table>';
-                        claudeSummary.innerHTML = `<div class="alert alert-info mb-2">${table}</div>`;
                     } else {
-                        // Fallback: highlight keywords in summary text
-                        summary = summary.replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
+                        // Fallback: show the whole summary as a single row, with color highlights
+                        let val = summary
+                            .replace(/malicious/gi, '<span class="badge bg-danger">$&</span>')
                             .replace(/suspicious/gi, '<span class="badge bg-warning text-dark">$&</span>')
                             .replace(/harmless/gi, '<span class="badge bg-success">$&</span>')
                             .replace(/undetected/gi, '<span class="badge bg-secondary">$&</span>');
-                        claudeSummary.innerHTML = `<div class="alert alert-info mb-2"><table class="table table-bordered table-sm mb-0"><tbody><tr><td>${summary}</td></tr></tbody></table></div>`;
+                        table += `<tr><td colspan="2">${val}</td></tr>`;
                     }
+                    table += '</tbody></table>';
+                    claudeSummary.innerHTML = `<div class="alert alert-info mb-2">${table}</div>`;
                 }
 
                 // VirusTotal section (show key fields with color-coded status)
