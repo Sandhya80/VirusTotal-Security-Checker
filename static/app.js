@@ -274,41 +274,54 @@ document.addEventListener('DOMContentLoaded', function() {
                     const rankB = threatRank[catB] || 99;
                     if (rankA !== rankB) return rankA - rankB;
                     return a[0].localeCompare(b[0]);
+            let val = v;
+            if (k === 'status' && typeof v === 'string') {
+                let badgeClass = 'bg-secondary';
+                if (v.toLowerCase() === 'malicious') badgeClass = 'bg-danger';
+                else if (v.toLowerCase() === 'suspicious') badgeClass = 'bg-warning text-dark';
+                else if (v.toLowerCase() === 'harmless') badgeClass = 'bg-success';
+                else if (v.toLowerCase() === 'undetected') badgeClass = 'bg-secondary';
+                val = `<span class=\"badge ${badgeClass}\">${v}</span>`;
+            } else if (typeof v === 'string') {
+                val = v.replace(/malicious/gi, '<span class=\"badge bg-danger\">$&</span>')
+                    .replace(/suspicious/gi, '<span class=\"badge bg-warning text-dark\">$&</span>')
+                    .replace(/harmless/gi, '<span class=\"badge bg-success\">$&</span>')
+                    .replace(/undetected/gi, '<span class=\"badge bg-secondary\">$&</span>');
+            } else if (k === 'vendors' && typeof v === 'object' && v !== null) {
+                // Render vendors as a table, top 10 by threat
+                const threatRank = { malicious: 1, suspicious: 2, harmless: 3, undetected: 4 };
+                let vendorArr = Object.entries(v);
+                vendorArr.sort((a, b) => {
+                    const catA = (a[1].category || '').toLowerCase();
+                    const catB = (b[1].category || '').toLowerCase();
+                    const rankA = threatRank[catA] || 99;
+                    const rankB = threatRank[catB] || 99;
+                    if (rankA !== rankB) return rankA - rankB;
+                    return a[0].localeCompare(b[0]);
                 });
                 const topVendors = vendorArr.slice(0, 10);
-                val = '<table class="table table-bordered table-sm mb-2"><thead><tr><th>Vendor</th><th>Result</th><th>Category</th></tr></thead><tbody>';
+                val = '<table class=\"table table-bordered table-sm mb-2\"><thead><tr><th>Vendor</th><th>Result</th><th>Category</th></tr></thead><tbody>';
                 for (const [vendor, info] of topVendors) {
-                    val += `<tr><td><strong>${vendor}</strong></td><td><span class="badge ${badgeClass(info.category)}">${info.result}</span></td><td>${info.category}</td></tr>`;
+                    val += `<tr><td><strong>${vendor}</strong></td><td><span class=\"badge ${badgeClass(info.category)}\">${info.result}</span></td><td>${info.category}</td></tr>`;
+                }
+                val += '</tbody></table>';
+            } else if (k === 'stats' && typeof v === 'object' && v !== null) {
+                // Render stats as a table
+                val = '<table class=\"table table-bordered table-sm mb-2\"><thead><tr><th>Type</th><th>Count</th></tr></thead><tbody>';
+                for (const statKey of Object.keys(v)) {
+                    let badge = '';
+                    if (statKey === 'malicious') badge = 'bg-danger';
+                    else if (statKey === 'suspicious') badge = 'bg-warning text-dark';
+                    else if (statKey === 'harmless') badge = 'bg-success';
+                    else if (statKey === 'undetected') badge = 'bg-secondary';
+                    else badge = 'bg-info';
+                    val += `<tr><td><span class=\"badge ${badge}\">${statKey}</span></td><td>${v[statKey]}</td></tr>`;
                 }
                 val += '</tbody></table>';
             } else if (typeof v === 'object') {
-                val = `<pre class="mb-0">${JSON.stringify(v, null, 2)}</pre>`;
+                val = `<pre class=\"mb-0\">${JSON.stringify(v, null, 2)}</pre>`;
             }
             html += `<tr><td>${k}</td><td>${val}</td></tr>`;
-                        }
-                        html += '</tbody></table>';
-                        vtSection.innerHTML = html;
-                    } else {
-                        vtSection.textContent = 'No VirusTotal data.';
-                    }
-                }
-
-                // Vectara section (show top 3 snippets, no color change)
-                if (vectaraSection) {
-                    if (data.vectara && data.vectara.query && data.vectara.query[0] && data.vectara.query[0].result) {
-                        const results = data.vectara.query[0].result;
-                        if (results.length > 0) {
-                            let html = '<ul class="list-group list-group-flush">';
-                            for (const r of results) {
-                                html += `<li class="list-group-item"><strong>Score:</strong> ${r.score.toFixed(2)}<br><span>${r.text}</span></li>`;
-                            }
-                            html += '</ul>';
-                            vectaraSection.innerHTML = html;
-                        } else {
-                            vectaraSection.textContent = 'No relevant Vectara results.';
-                        }
-                    } else {
-                        vectaraSection.textContent = 'No Vectara data.';
                     }
                 }
             } catch (err) {
